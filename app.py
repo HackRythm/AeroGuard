@@ -22,11 +22,11 @@ st.set_page_config(
 st.markdown("""
 <style>
     .main {
-        background-color: #0b0f19;
-        color: #e2e8f0;
+        background-color: #030712;
+        color: #f8fafc;
     }
     .stApp {
-        background-color: #0b0f19;
+        background-color: #030712;
     }
     h1, h2, h3, h4, h5, h6 {
         color: #38bdf8 !important;
@@ -36,41 +36,39 @@ st.markdown("""
         color: #0ea5e9;
         font-family: 'Courier New', monospace;
     }
-    .metric-card {
-        background-color: #111827;
-        border: 1px solid #1e293b;
-        border-radius: 8px;
-        padding: 15px;
-        text-align: center;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    
+    /* Header Pulse Animation */
+    @keyframes pulse {
+        0% { opacity: 0.5; }
+        50% { opacity: 1.0; }
+        100% { opacity: 0.5; }
     }
-    .metric-title {
-        color: #94a3b8;
-        font-size: 0.9rem;
-        margin-bottom: 5px;
-    }
-    .metric-value {
-        color: #38bdf8;
-        font-size: 1.8rem;
+    .status-online {
+        color: #10b981;
         font-weight: bold;
         font-family: 'Courier New', monospace;
+        animation: pulse 2.5s infinite;
+        font-size: 1.0rem;
     }
-    .alert-card {
-        border-left: 4px solid #ef4444 !important;
-    }
-    .normal-card {
-        border-left: 4px solid #10b981 !important;
+    
+    /* Sleek container boxes */
+    .atc-panel {
+        background-color: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        padding: 18px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
     }
 </style>
 """, unsafe_allow_html=True)
 
 # Helper function to render cards
-def render_card(title, value, is_alert=False):
-    border_color = "#ef4444" if is_alert else "#10b981"
+def render_card(title, value, border_color="#10b981"):
     st.markdown(f"""
     <div style="background-color: #0f172a; border: 1px solid #1e293b; border-left: 5px solid {border_color}; border-radius: 8px; padding: 15px; text-align: center;">
-        <div style="color: #94a3b8; font-size: 0.85rem; font-weight: bold; text-transform: uppercase;">{title}</div>
-        <div style="color: #f8fafc; font-size: 1.8rem; font-weight: bold; font-family: 'Courier New', monospace; margin-top: 5px;">{value}</div>
+        <div style="color: #94a3b8; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; font-family: 'Courier New', monospace;">{title}</div>
+        <div style="color: #f8fafc; font-size: 1.7rem; font-weight: bold; font-family: 'Courier New', monospace; margin-top: 5px;">{value}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -98,155 +96,291 @@ timestamps = sorted(df_preds['timestamp'].unique())
 n_timestamps = len(timestamps)
 
 # Calculate threshold for classification based on 83rd percentile of GNN scores
-# This matches the expected true anomaly ratio in the test set
 GNN_THRESHOLD = df_preds['anomaly_score'].quantile(0.83)
 
 # ==============================================================================
-# SIDEBAR / PLAYBACK CONTROLS
+# SESSION STATE MANAGEMENT
 # ==============================================================================
-st.sidebar.markdown("### 📡 SYSTEM CONTROLS")
-
-# Playback state management
 if "current_index" not in st.session_state:
     st.session_state.current_index = 0
 if "playing" not in st.session_state:
     st.session_state.playing = False
+if "selected_callsign" not in st.session_state:
+    st.session_state.selected_callsign = ""
+if "substep" not in st.session_state:
+    st.session_state.substep = 0.0
 
-def toggle_play():
-    st.session_state.playing = not st.session_state.playing
-
-# Playback controls row
-play_label = "⏸️ PAUSE" if st.session_state.playing else "▶️ PLAY MONITOR"
-st.sidebar.button(play_label, on_click=toggle_play, use_container_width=True)
-
-# Playback speed
-playback_speed = st.sidebar.slider("Playback interval (seconds)", min_value=0.2, max_value=2.0, value=0.5, step=0.1)
-
-# Time slider linked to session state
-current_idx = st.sidebar.slider(
-    "Active Time Step", 
-    min_value=0, 
-    max_value=n_timestamps - 1, 
-    value=st.session_state.current_index, 
-    key="slider_index"
-)
-st.session_state.current_index = current_idx
-
-# Update index in session state if playing
+# ==============================================================================
+# PLAYBACK & DEMO LOOP (LINEAR INTERPOLATION)
+# ==============================================================================
+# Increment playback frame
 if st.session_state.playing:
-    if st.session_state.current_index < n_timestamps - 1:
-        st.session_state.current_index += 1
-        time.sleep(playback_speed)
-        st.rerun()
+    # 2 sub-steps per timestamp to make movement glide instead of teleport
+    if st.session_state.substep < 0.5:
+        st.session_state.substep += 0.5
     else:
-        st.session_state.playing = False
+        st.session_state.substep = 0.0
+        if st.session_state.current_index < n_timestamps - 1:
+            st.session_state.current_index += 1
+        else:
+            st.session_state.playing = False
+    time.sleep(0.2)  # High frame rate redraw
+    st.rerun()
 
-current_ts = timestamps[st.session_state.current_index]
+current_ts_idx = st.session_state.current_index
+current_ts = timestamps[current_ts_idx]
+alpha = st.session_state.substep
 
-# Standard threshold selector
-st.sidebar.markdown("---")
-st.sidebar.markdown("### ⚙️ DETECTION CONFIG")
-custom_threshold = st.sidebar.slider("GNN Anomaly Threshold", min_value=0.01, max_value=0.99, value=float(GNN_THRESHOLD), step=0.01)
+# ==============================================================================
+# INTERPOLATE AIRCRAFT MOVEMENT
+# ==============================================================================
+# Get active rows at current and next step (if available)
+active_t = df_preds[df_preds['timestamp'] == current_ts].copy()
 
-# Filter active aircraft at current time
-active_df = df_preds[df_preds['timestamp'] == current_ts].copy().reset_index(drop=True)
-active_df['pred_label'] = (active_df['anomaly_score'] >= custom_threshold).astype(int)
+if current_ts_idx < n_timestamps - 1 and alpha > 0.0:
+    next_ts = timestamps[current_ts_idx + 1]
+    active_t1 = df_preds[df_preds['timestamp'] == next_ts].copy()
+    
+    # Merge to find overlapping aircraft
+    merged = pd.merge(active_t, active_t1, on='icao24', suffixes=('_t', '_t1'))
+    
+    interpolated_rows = []
+    for _, row in merged.iterrows():
+        # Linear interpolation
+        lat = row['latitude_t'] * (1 - alpha) + row['latitude_t1'] * alpha
+        lon = row['longitude_t'] * (1 - alpha) + row['longitude_t1'] * alpha
+        alt = row['altitude_t'] * (1 - alpha) + row['altitude_t1'] * alpha
+        geoalt = row['geoaltitude_t'] * (1 - alpha) + row['geoaltitude_t1'] * alpha
+        gs = row['groundspeed_t'] * (1 - alpha) + row['groundspeed_t1'] * alpha
+        vr = row['vertical_rate_t'] * (1 - alpha) + row['vertical_rate_t1'] * alpha
+        
+        # Heading interpolation (angular shortest path)
+        h_t = row['heading_t']
+        h_t1 = row['heading_t1']
+        diff = (h_t1 - h_t + 180) % 360 - 180
+        heading = (h_t + diff * alpha) % 360
+        
+        # Keep features from state t for simplicity
+        interp_row = row.to_dict()
+        # Clean suffix names
+        for key in list(interp_row.keys()):
+            if key.endswith('_t'):
+                base_key = key[:-2]
+                interp_row[base_key] = interp_row[key]
+                
+        interp_row.update({
+            'latitude': lat,
+            'longitude': lon,
+            'altitude': alt,
+            'geoaltitude': geoalt,
+            'groundspeed': gs,
+            'heading': heading,
+            'vertical_rate': vr
+        })
+        interpolated_rows.append(interp_row)
+        
+    # Append flights that exist only in t
+    only_t = active_t[~active_t['icao24'].isin(merged['icao24'])].to_dict('records')
+    interpolated_rows.extend(only_t)
+    
+    active_df = pd.DataFrame(interpolated_rows)
+else:
+    active_df = active_t.copy()
 
-# Active flights details
+# Ensure standard threshold values are applied
+active_df['pred_label'] = 0
+active_df.loc[active_df['anomaly_score'] >= GNN_THRESHOLD, 'pred_label'] = 2  # Critical
+active_df.loc[(active_df['anomaly_score'] >= 0.3) & (active_df['anomaly_score'] < GNN_THRESHOLD), 'pred_label'] = 1  # Warning
+
+# Count metrics
 n_active = len(active_df)
-n_anoms = (active_df['pred_label'] == 1).sum()
-n_normal = n_active - n_anoms
+n_crit = (active_df['pred_label'] == 2).sum()
+n_warn = (active_df['pred_label'] == 1).sum()
+n_normal = n_active - n_crit - n_warn
 
-# Active graph edges count
+# Calculate Active Undirected Edges count (Proximity <= 100km)
 edge_count = 0
 if n_active > 1:
     x_c, y_c = active_df['x'].values, active_df['y'].values
     dx = x_c[:, None] - x_c[None, :]
     dy = y_c[:, None] - y_c[None, :]
     dist = np.sqrt(dx**2 + dy**2)
-    edge_count = np.sum(dist <= 100000.0) // 2  # Undirected edges
+    edge_count = np.sum(dist <= 100000.0) // 2
 
 # ==============================================================================
-# MAIN PAGE LAYOUT
+# TOP HEADER & PRESENTATION GRID
 # ==============================================================================
-# Header
-st.markdown("<h1 style='text-align: center; margin-bottom: 0;'>📡 AeroGuard AI</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: center; color: #94a3b8 !important; margin-top: 0;'>ADS-B Airspace Relational Threat Detection System</h4>", unsafe_allow_html=True)
-st.markdown(f"<div style='text-align: center; font-family: monospace; color: #38bdf8;'>CURRENT MONITOR TIME: {current_ts}</div>", unsafe_allow_html=True)
+h_col1, h_col2 = st.columns([3, 1])
+with h_col1:
+    st.markdown("<h1 style='margin: 0; padding: 0;'>AEROGUARD AI</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748b; font-family: monospace; margin: 0; padding: 0;'>Dynamic Airspace Intelligence & ADS-B Security Monitoring</p>", unsafe_allow_html=True)
+with h_col2:
+    st.markdown("<div style='text-align: right; margin-top: 10px;'><span class='status-online'>● SYSTEM MONITOR ONLINE</span></div>", unsafe_allow_html=True)
+
+st.markdown("<hr style='margin: 10px 0 20px 0; border-color: #1e293b;'>", unsafe_allow_html=True)
+
+# Metric KPI cards
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+with kpi1:
+    render_card("AIRCRAFT TRACKED", n_active, "#38bdf8")
+with kpi2:
+    render_card("SECURE TRAJECTORIES", n_normal, "#10b981")
+with kpi3:
+    render_card("ANOMALOUS ALERTS", n_crit + n_warn, "#ef4444" if (n_crit + n_warn > 0) else "#1e293b")
+with kpi4:
+    render_card("ACTIVE GRAPH EDGES", edge_count, "#64748b")
+
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 1. Summary Cards (KPIs)
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    render_card("Aircraft Tracked", n_active)
-with col2:
-    render_card("Normal Aircraft", n_normal)
-with col3:
-    render_card("Active Alerts", n_anoms, is_alert=(n_anoms > 0))
-with col4:
-    render_card("Active Graph Edges", edge_count)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# 2. Main Visualizations (Map vs Graph Topology)
-viz_col, graph_col = st.columns([3, 2])
-
-with viz_col:
-    st.markdown("### ✈️ AIRSPACE TRAJECTORY MAP")
+# Selectable aircraft dropdown in sidebar
+st.sidebar.markdown("### 🔍 FLIGHT INTERCEPT")
+all_active_callsigns = sorted(active_df['callsign'].unique())
+if st.session_state.selected_callsign not in all_active_callsigns:
+    st.session_state.selected_callsign = all_active_callsigns[0] if all_active_callsigns else ""
     
-    fig, ax = plt.subplots(figsize=(10, 6.5))
-    fig.patch.set_facecolor('#0f172a')
-    ax.set_facecolor('#0b0f19')
+selected_callsign = st.sidebar.selectbox(
+    "Select Target Aircraft", 
+    all_active_callsigns,
+    index=all_active_callsigns.index(st.session_state.selected_callsign) if st.session_state.selected_callsign in all_active_callsigns else 0
+)
+st.session_state.selected_callsign = selected_callsign
+
+# Retrieve selected aircraft row
+selected_row = None
+if selected_callsign in active_df['callsign'].values:
+    selected_row = active_df[active_df['callsign'] == selected_callsign].iloc[0]
+
+# ==============================================================================
+# MAIN DISPLAY PANEL - AIRSPACE MAP
+# ==============================================================================
+st.markdown("### ✈️ LIVE SURVEILLANCE RADAR DISPLAY")
+
+fig, ax = plt.subplots(figsize=(15, 6.5))
+fig.patch.set_facecolor('#030712')
+ax.set_facecolor('#0f172a')
+
+# Faint radar grid and spines
+ax.grid(color='#1e293b', linestyle=':', linewidth=0.5)
+for spine in ax.spines.values():
+    spine.set_color('#1e293b')
+
+# Concentric range rings around Lisbon Receiver coordinates
+# Plot as faint range arcs centered at (38.7756, -9.1354)
+for r_km in [1300, 1400, 1500, 1600]:
+    bearings = np.linspace(np.radians(280), np.radians(360), 100)
+    # Simple projection rings matching degree boundaries
+    r_deg = r_km / 111.0
+    lat_ring = RECEIVER_LAT + r_deg * np.cos(bearings)
+    lon_ring = RECEIVER_LON + r_deg * np.sin(bearings)
+    ax.plot(lon_ring, lat_ring, color='#334155', linestyle='--', linewidth=0.8, alpha=0.5)
+    # Ring label
+    ax.text(lon_ring[50], lat_ring[50] + 0.05, f"{r_km} km", color='#475569', fontsize=8, fontfamily='monospace')
+
+# Plot active aircraft trails and markers
+for _, row in active_df.iterrows():
+    icao = row['icao24']
+    callsign = row['callsign']
+    pred = row['pred_label']
     
-    # Grid lines
-    ax.grid(color='#1e293b', linestyle='--', linewidth=0.5)
+    # 1. Plot historical trajectory trail
+    trail = df_preds[(df_preds['icao24'] == icao) & (df_preds['timestamp'] <= current_ts)].sort_values('timestamp').tail(40)
+    is_selected = (selected_row is not None and icao == selected_row['icao24'])
     
-    # Plot historical trajectories of active flights
+    # Trace color based on status
+    if pred == 2:
+        trace_color = '#ef4444'  # Critical Red
+    elif pred == 1:
+        trace_color = '#f59e0b'  # Warning Amber
+    else:
+        trace_color = '#10b981'  # Normal Green
+        
+    trail_alpha = 0.8 if is_selected else 0.2
+    trail_width = 2.5 if is_selected else 1.2
+    
+    ax.plot(trail['longitude'], trail['latitude'], color=trace_color, alpha=trail_alpha, linewidth=trail_width)
+    
+    # 2. Draw target marker
+    marker_shape = 'o'
+    marker_size = 70
+    if pred == 2:
+        marker_shape = 'D'  # Diamond
+        marker_size = 90
+    elif pred == 1:
+        marker_shape = '^'  # Triangle
+        marker_size = 80
+        
+    # Standard arrowhead heading vector
+    h_rad = np.radians(90.0 - row['heading'])
+    u = np.cos(h_rad) * 0.15
+    v = np.sin(h_rad) * 0.15
+    ax.quiver(row['longitude'], row['latitude'], u, v, color=trace_color, scale=3, scale_units='xy', width=0.003, zorder=6)
+    
+    ax.scatter(row['longitude'], row['latitude'], color=trace_color, marker=marker_shape, s=marker_size, edgecolors='#ffffff', linewidths=0.5, zorder=7)
+    
+    # Labels (only for selected or anomalous targets to prevent clutter)
+    if is_selected or pred > 0:
+        label_color = '#ef4444' if pred == 2 else ('#f59e0b' if pred == 1 else '#38bdf8')
+        label_text = f"{callsign}\n[{row['anomaly_type'].upper()}]" if pred > 0 else f"{callsign}"
+        ax.text(row['longitude'] + 0.08, row['latitude'] + 0.04, label_text, color=label_color, fontsize=8, fontfamily='monospace', weight='bold', bbox=dict(boxstyle='square,pad=0.2', facecolor='#090d16', alpha=0.8, edgecolor='#1e293b', lw=0.5))
+
+# Draw neighbor links for selected aircraft
+if selected_row is not None and n_active > 1:
+    x_sel, y_sel = selected_row['x'], selected_row['y']
     for _, row in active_df.iterrows():
-        icao = row['icao24']
-        callsign = row['callsign']
-        
-        # Get historical trail
-        trail = df_preds[(df_preds['icao24'] == icao) & (df_preds['timestamp'] <= current_ts)].sort_values('timestamp').tail(60)
-        
-        # Determine trail color (red if currently anomalous)
-        color = '#ef4444' if row['pred_label'] == 1 else '#38bdf8'
-        ax.plot(trail['longitude'], trail['latitude'], color=color, alpha=0.4, linewidth=1.5)
-        
-        # Draw current position dot
-        ax.scatter(row['longitude'], row['latitude'], color=color, s=80, edgecolors='#ffffff', linewidths=0.5, zorder=5)
-        
-        # Text label
-        ax.text(row['longitude'] + 0.05, row['latitude'] + 0.03, f"{callsign}", color='#f1f5f9', fontsize=9, fontfamily='monospace', weight='bold')
+        if row['icao24'] == selected_row['icao24']:
+            continue
+        h_d = np.sqrt((x_sel - row['x'])**2 + (y_sel - row['y'])**2)
+        if h_d <= 100000.0:  # Within proximity edge
+            ax.plot([selected_row['longitude'], row['longitude']], [selected_row['latitude'], row['latitude']], color='#ef4444' if (selected_row['pred_label'] == 2 or row['pred_label'] == 2) else '#38bdf8', linestyle=':', linewidth=1.5, alpha=0.8)
 
-    ax.set_xlim(-16.0, -6.5)
-    ax.set_ylim(50.8, 56.0)
-    ax.set_xlabel("Longitude (deg)", color='#94a3b8')
-    ax.set_ylabel("Latitude (deg)", color='#94a3b8')
-    ax.tick_params(colors='#94a3b8', labelsize=9)
+ax.set_xlim(-16.0, -7.0)
+ax.set_ylim(50.5, 56.2)
+ax.tick_params(colors='#64748b', labelsize=8)
+for label in ax.get_xticklabels() + ax.get_yticklabels():
+    label.set_fontfamily('monospace')
     
-    # Style spines
-    for spine in ax.spines.values():
-        spine.set_color('#1e293b')
-        
-    st.pyplot(fig)
+st.pyplot(fig)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# ==============================================================================
+# BOTTOM PANELS: GRAPH & ACTIVE THREATS
+# ==============================================================================
+graph_col, threat_col = st.columns([4, 3])
 
 with graph_col:
-    st.markdown("### 🕸️ MULTI-AIRCRAFT GRAPH RELATIONS")
+    st.markdown("<div class='atc-panel'>", unsafe_allow_html=True)
+    st.markdown("### 🕸️ DYNAMIC GRAPH TOPOLOGY")
     
-    fig, ax = plt.subplots(figsize=(7, 6.5))
-    fig.patch.set_facecolor('#0f172a')
-    ax.set_facecolor('#0b0f19')
+    fig_g, ax_g = plt.subplots(figsize=(8, 5.5))
+    fig_g.patch.set_facecolor('#0f172a')
+    ax_g.set_facecolor('#0f172a')
     
-    # Construct networkx graph
     G = nx.Graph()
     colors = []
     labels = {}
+    node_sizes = []
+    line_widths = []
+    
+    # Stabilize graph node coordinates by mapping directly to flight longitude/latitude
+    pos = {}
     
     for i, row in active_df.iterrows():
         G.add_node(i, label=row['icao24'])
         labels[i] = row['callsign']
-        colors.append('#ef4444' if row['pred_label'] == 1 else '#10b981')
+        pos[i] = (row['longitude'], row['latitude'])
+        
+        is_selected = (selected_row is not None and row['icao24'] == selected_row['icao24'])
+        
+        if row['pred_label'] == 2:
+            colors.append('#ef4444')
+        elif row['pred_label'] == 1:
+            colors.append('#f59e0b')
+        else:
+            colors.append('#10b981')
+            
+        node_sizes.append(600 if is_selected else 250)
+        line_widths.append(1.5 if is_selected else 0.5)
         
     if n_active > 1:
         x_c, y_c = active_df['x'].values, active_df['y'].values
@@ -259,80 +393,159 @@ with graph_col:
                 if dist[i, j] <= 100000.0:
                     G.add_edge(i, j)
                     
-    pos = nx.kamada_kawai_layout(G) if len(G.edges) > 0 else nx.circular_layout(G)
+    # Draw graph elements
+    nx.draw_networkx_nodes(G, pos, node_color=colors, node_size=node_sizes, edgecolors='#ffffff', linewidths=line_widths, ax=ax_g)
+    nx.draw_networkx_labels(G, pos, labels=labels, font_size=7, font_color='#f8fafc', font_family='monospace', font_weight='bold', ax=ax_g)
     
-    nx.draw_networkx_nodes(G, pos, node_color=colors, node_size=600, edgecolors='#ffffff', linewidths=0.5, ax=ax)
-    nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, font_color='#f8fafc', font_family='monospace', font_weight='bold', ax=ax)
-    nx.draw_networkx_edges(G, pos, edge_color='#475569', width=1.5, ax=ax)
-    
-    ax.axis('off')
-    st.pyplot(fig)
-
-# 3. Alert Panel & Selected Flight Inspector
-st.markdown("---")
-alert_col, inspect_col = st.columns([3, 2])
-
-with alert_col:
-    st.markdown("### ⚠️ THREAT DETECTOR & ALERTS")
-    
-    alert_display = []
-    for _, row in active_df.iterrows():
-        status = "🚨 ALERT" if row['pred_label'] == 1 else "✅ NORMAL"
-        threat_type = row['anomaly_type'] if row['pred_label'] == 1 else "normal"
-        alert_display.append({
-            'Callsign': row['callsign'],
-            'ICAO24': row['icao24'],
-            'Status': status,
-            'Anomaly Score': f"{row['anomaly_score']:.4f}",
-            'Threat Category': threat_type.upper()
-        })
+    # Emphasize edges connected to selected flight
+    edge_list = list(G.edges)
+    if len(edge_list) > 0:
+        edge_colors = []
+        widths = []
+        for u_node, v_node in edge_list:
+            u_icao = active_df.loc[u_node, 'icao24']
+            v_icao = active_df.loc[v_node, 'icao24']
+            
+            is_sel_edge = (selected_row is not None and (u_icao == selected_row['icao24'] or v_icao == selected_row['icao24']))
+            edge_colors.append('#38bdf8' if is_sel_edge else '#475569')
+            widths.append(2.0 if is_sel_edge else 1.0)
+            
+        nx.draw_networkx_edges(G, pos, edgelist=edge_list, edge_color=edge_colors, width=widths, alpha=0.7, ax=ax_g)
         
-    df_alerts = pd.DataFrame(alert_display)
-    st.dataframe(
-        df_alerts,
-        use_container_width=True,
-        hide_index=True
-    )
+    ax_g.axis('off')
+    st.pyplot(fig_g)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with threat_col:
+    st.markdown("<div class='atc-panel'>", unsafe_allow_html=True)
+    st.markdown("### ⚠ ACTIVE THREATS")
+    
+    threat_list = []
+    for _, row in active_df.iterrows():
+        if row['pred_label'] > 0:
+            status = "🚨 CRITICAL" if row['pred_label'] == 2 else "⚠️ WARNING"
+            threat_list.append({
+                'Callsign': row['callsign'],
+                'Ident': row['icao24'],
+                'Threat Profile': row['anomaly_type'].upper().replace('_', ' '),
+                'Status': status,
+                'Anomaly Score': f"{row['anomaly_score']:.3f}"
+            })
+            
+    if threat_list:
+        df_threats = pd.DataFrame(threat_list)
+        # Interactive table selection
+        selection = st.dataframe(
+            df_threats,
+            use_container_width=True,
+            hide_index=True,
+            on_select="rerun",
+            selection_mode="single_row",
+            key="threat_table"
+        )
+        
+        # Sync selection back to selected aircraft
+        selected_rows = selection.get("selection", {}).get("rows", [])
+        if selected_rows:
+            target_callsign = df_threats.iloc[selected_rows[0]]['Callsign']
+            if target_callsign != st.session_state.selected_callsign:
+                st.session_state.selected_callsign = target_callsign
+                st.rerun()
+    else:
+        st.markdown("<div style='color: #475569; font-family: monospace; text-align: center; padding: 50px 0;'>NO SECURE VIOLATIONS DETECTED IN MONITOR BLOCK</div>", unsafe_allow_html=True)
+        
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# INFORMATION PANELS: FLIGHT INSPECTOR & SDC TELEMETRY
+# ==============================================================================
+inspect_col, comm_col = st.columns(2)
 
 with inspect_col:
-    st.markdown("### 🔍 FLIGHT TELEMETRY INSPECTOR")
+    st.markdown("<div class='atc-panel'>", unsafe_allow_html=True)
+    st.markdown("### 🔍 TARGET KINEMATICS")
     
-    # Dropdown to select active flight
-    selected_callsign = st.selectbox("Select Flight Target", active_df['callsign'].unique())
-    
-    if selected_callsign:
-        target_row = active_df[active_df['callsign'] == selected_callsign].iloc[0]
+    if selected_row is not None:
+        p_label = selected_row['pred_label']
+        status_text = "🚨 CRITICAL SPOOF THREAT" if p_label == 2 else ("⚠️ FLIGHT INCONSISTENCY" if p_label == 1 else "✅ SECURE KINEMATICS")
+        status_color = "red" if p_label == 2 else ("orange" if p_label == 1 else "green")
         
-        status_text = "🚨 SPREADING SPOOF THREAT" if target_row['pred_label'] == 1 else "✅ SECURE KINEMATICS"
-        status_color = "red" if target_row['pred_label'] == 1 else "green"
+        st.markdown(f"**Surveillance Status**: :{status_color}[{status_text}]")
+        st.markdown(f"**Callsign**: `{selected_row['callsign']}` | **ICAO24**: `{selected_row['icao24']}`")
         
-        st.markdown(f"**Target Status**: :{status_color}[{status_text}]")
-        if target_row['pred_label'] == 1:
-            st.markdown(f"**Identified Attack Profile**: :red[{target_row['anomaly_type'].upper()}]")
-            st.markdown(f"**Model Anomaly Score**: :red[{target_row['anomaly_score']:.4f}]")
-        else:
-            st.markdown(f"**Model Anomaly Score**: :green[{target_row['anomaly_score']:.4f}]")
-            
-        # Detail grid
+        # Telemetry detail
         dcol1, dcol2 = st.columns(2)
         with dcol1:
-            st.markdown(f"**ICAO24**: `{target_row['icao24']}`")
-            st.markdown(f"**Altitude**: `{target_row['altitude']:.1f} ft` (Geo: `{target_row['geoaltitude']:.1f} ft`)")
-            st.markdown(f"**Speed**: `{target_row['groundspeed']:.1f} knots`")
-            st.markdown(f"**Heading**: `{target_row['heading']:.1f}°`")
-            st.markdown(f"**Vertical Rate**: `{target_row['vertical_rate']:.1f} fpm`")
+            st.markdown(f"**Latitude**: `{selected_row['latitude']:.4f}°`")
+            st.markdown(f"**Longitude**: `{selected_row['longitude']:.4f}°`")
+            st.markdown(f"**Altitude**: `{selected_row['altitude']:.0f} ft` (Geo: `{selected_row['geoaltitude']:.0f} ft`)")
+            st.markdown(f"**Speed**: `{selected_row['groundspeed']:.1f} knots`")
         with dcol2:
-            st.markdown(f"**Acceleration**: `{target_row['acceleration']:.3f} m/s²`")
-            st.markdown(f"**Turn Rate**: `{target_row['turn_rate']:.3f}°/s`")
-            st.markdown(f"**Doppler Shift (Est)**: `{target_row['estimated_doppler_hz']:.2f} Hz`")
-            st.markdown(f"**Signal Power (Est)**: `{target_row['estimated_rss_dbm']:.2f} dBm`")
-            st.markdown(f"**SNR (Est)**: `{target_row['estimated_snr_db']:.2f} dB`")
+            st.markdown(f"**Heading**: `{selected_row['heading']:.1f}°`")
+            st.markdown(f"**Vertical Rate**: `{selected_row['vertical_rate']:.0f} fpm`")
+            st.markdown(f"**Acceleration**: `{selected_row['acceleration']:.3f} m/s²`")
+            st.markdown(f"**Turn Rate**: `{selected_row['turn_rate']:.3f}°/s`")
             
-        # Multi-Aircraft Relational features
-        st.markdown("**Relational Context (G(t))**:")
-        st.markdown(f"- Neighbor Count (100km): `{target_row['neighbor_count']}` | Local Density (50km): `{target_row['local_aircraft_density']}`")
-        if target_row['nearest_aircraft_distance'] < 500000.0:
-            st.markdown(f"- Distance to Nearest Flight: `{target_row['nearest_aircraft_distance']:.1f} meters`")
-            st.markdown(f"- Rel. Altitude: `{target_row['relative_altitude']:.1f} ft` | Rel. Velocity: `{target_row['relative_velocity']:.1f} knots` | Rel. Heading: `{target_row['relative_heading']:.1f}°`")
-        else:
-            st.markdown("- Nearest Flight: `None in detection range`")
+        st.markdown(f"**Threat Category**: `{selected_row['anomaly_type'].upper()}` | **GNN Anomaly Score**: `{selected_row['anomaly_score']:.4f}`")
+    else:
+        st.info("Select a flight target to display kinematics data.")
+        
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with comm_col:
+    st.markdown("<div class='atc-panel'>", unsafe_allow_html=True)
+    st.markdown("### 📡 SDC COMMUNICATION TELEMETRY (SIMULATED)")
+    
+    if selected_row is not None:
+        st.markdown("<span style='color: #64748b; font-size: 0.8rem; font-family: monospace;'>SIGNAL ATTRIBUTES DERIVED FROM SYSTEM PARAMETERS</span>", unsafe_allow_html=True)
+        st.markdown(f"**Nominal Carrier Frequency**: `1090 MHz` (ADS-B 1090ES)")
+        
+        # SDC telemetry detail
+        scol1, scol2 = st.columns(2)
+        with scol1:
+            st.markdown(f"**Doppler Shift (Est)**: `{selected_row['estimated_doppler_hz']:.2f} Hz`")
+            st.markdown(f"**Signal Power (Est)**: `{selected_row['estimated_rss_dbm']:.2f} dBm`")
+            st.markdown(f"**SNR (Est)**: `{selected_row['estimated_snr_db']:.2f} dB`")
+        with scol2:
+            st.markdown(f"**Distance to Receiver**: `{selected_row['distance_to_receiver']/1000.0:.2f} km`")
+            st.markdown(f"**Path Loss (Est)**: `{selected_row['path_loss_db']:.2f} dB`")
+            st.markdown(f"**Radial Velocity**: `{selected_row['radial_velocity']:.1f} m/s`")
+    else:
+        st.info("Select a flight target to display communication signal telemetry.")
+        
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==============================================================================
+# FOOTER / TIMELINE PLAYBACK CONTROLS
+# ==============================================================================
+st.markdown("<hr style='margin: 20px 0 10px 0; border-color: #1e293b;'>", unsafe_allow_html=True)
+
+p_col1, p_col2, p_col3 = st.columns([1, 4, 1])
+
+with p_col1:
+    demo_mode = st.toggle("📺 DEMO AUTOPLAY", value=st.session_state.playing, key="demo_mode_toggle")
+    if demo_mode != st.session_state.playing:
+        st.session_state.playing = demo_mode
+        st.rerun()
+
+with p_col2:
+    # Time step manual slider
+    manual_idx = st.slider(
+        "Playback Timeline",
+        min_value=0,
+        max_value=n_timestamps - 1,
+        value=st.session_state.current_index,
+        key="timeline_slider",
+        label_visibility="collapsed"
+    )
+    if manual_idx != st.session_state.current_index:
+        st.session_state.current_index = manual_idx
+        st.session_state.substep = 0.0
+        st.rerun()
+
+with p_col3:
+    if st.button("🔄 RESET DEMO", use_container_width=True):
+        st.session_state.current_index = 0
+        st.session_state.substep = 0.0
+        st.session_state.playing = False
+        st.rerun()
