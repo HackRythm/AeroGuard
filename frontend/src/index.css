@@ -1,0 +1,225 @@
+/* ── Google Fonts ─────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@import "tailwindcss";
+
+/* ── Stitch Design Tokens (Aerospace Command) ────── */
+@theme {
+  --color-background: #051424;
+  --color-surface: #051424;
+  --color-surface-dim: #051424;
+  --color-surface-bright: #2c3a4c;
+  --color-surface-container-lowest: #010f1f;
+  --color-surface-container-low: #0d1c2d;
+  --color-surface-container: #122131;
+  --color-surface-container-high: #1c2b3c;
+  --color-surface-container-highest: #273647;
+  --color-surface-variant: #273647;
+  --color-surface-tint: #adc6ff;
+
+  --color-on-surface: #d4e4fa;
+  --color-on-surface-variant: #c2c6d6;
+  --color-on-background: #d4e4fa;
+  --color-inverse-surface: #d4e4fa;
+  --color-inverse-on-surface: #233143;
+
+  --color-primary: #adc6ff;
+  --color-on-primary: #002e6a;
+  --color-primary-container: #4d8eff;
+  --color-on-primary-container: #00285d;
+  --color-inverse-primary: #005ac2;
+  --color-primary-fixed: #d8e2ff;
+  --color-primary-fixed-dim: #adc6ff;
+
+  --color-secondary: #c4c6ce;
+  --color-on-secondary: #2d3037;
+  --color-secondary-container: #464950;
+
+  --color-tertiary: #c6c6cc;
+  --color-on-tertiary: #2f3035;
+  --color-tertiary-container: #8f9096;
+
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+
+  --color-outline: #8c909f;
+  --color-outline-variant: #424754;
+
+  /* Override amber for warnings */
+  --color-warning: #f59e0b;
+  --color-on-warning: #451a03;
+
+  /* Functional aliases */
+  --color-anomaly: #ffb4ab;
+  --color-anomaly-bg: #93000a;
+  --color-normal: #adc6ff;
+  --color-trajectory: rgba(173, 198, 255, 0.4);
+  --color-trajectory-anomaly: rgba(255, 180, 171, 0.8);
+
+  /* Typography */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Spacing (4px base unit) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 48px;
+  --spacing-gutter: 16px;
+}
+
+/* ── Base ─────────────────────────────────────────── */
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Utility Classes ──────────────────────────────── */
+
+/* Grid pattern for map background */
+.grid-pattern {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(66, 71, 84, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(66, 71, 84, 0.1) 1px, transparent 1px);
+}
+
+/* Glassmorphism panel */
+.glass-panel {
+  background-color: rgba(26, 29, 35, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-outline-variant);
+}
+
+/* ── Keyframe Animations ──────────────────────────── */
+
+/* Radar sweep rotation */
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.radar-line {
+  transform-origin: 50% 50%;
+  animation: radar-sweep 4s linear infinite;
+}
+
+/* Anomaly node pulse */
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(255, 180, 171, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 180, 171, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 180, 171, 0); }
+}
+
+.anomaly-pulse {
+  animation: pulse-red 2s infinite;
+}
+
+/* SVG pulse for anomaly circles */
+@keyframes svg-pulse-red {
+  0% { r: 10; opacity: 0.6; }
+  70% { r: 18; opacity: 0; }
+  100% { r: 10; opacity: 0; }
+}
+
+/* Glow effect for active states */
+@keyframes glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(173, 198, 255, 0.3)); }
+  50% { filter: drop-shadow(0 0 8px rgba(173, 198, 255, 0.6)); }
+}
+
+.glow-primary {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Smooth fade-in for panels */
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+/* ── Scrollbar Styling ────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-container-lowest);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
+/* ── Typography Utility Classes ───────────────────── */
+.text-display-lg {
+  font-family: var(--font-sans);
+  font-size: 48px;
+  line-height: 56px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.text-headline-md {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.text-headline-sm {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.text-body-md {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+
+.text-body-sm {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.text-mono-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.text-mono-data {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
