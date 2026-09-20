@@ -476,25 +476,108 @@ def run_quality_checks(df, filename):
     else:
         print("  No internal true physical state columns leaked.")
 
+def generate_base_raw_dataset(output_path, is_train=True):
+    """
+    Generate initial raw ADS-B flight trajectories if not already present.
+    """
+    print(f"Synthesizing raw trajectory base dataset for {'training' if is_train else 'testing'} -> {output_path}...")
+    np.random.seed(SEED + (0 if is_train else 100))
+    
+    num_aircraft = 26 if is_train else 8
+    num_seconds = 3600  # 1 hour simulation window at 1 Hz
+    
+    start_time = pd.Timestamp("2020-01-01 10:00:00") if is_train else pd.Timestamp("2020-01-02 10:00:00")
+    
+    rows = []
+    
+    # Base location for training (Lisbon FIR) vs testing (OOD sector ~1500km away)
+    base_lat = RECEIVER_LAT if is_train else 52.0
+    base_lon = RECEIVER_LON if is_train else -9.0
+    
+    rec_lat_rad = np.radians(RECEIVER_LAT)
+    
+    for i in range(num_aircraft):
+        icao = f"40{i+1:04x}" if is_train else f"50{i+1:04x}"
+        callsign = f"TAP{100+i}" if is_train else f"RYR{200+i}"
+        
+        # Initial position spread within ~50-100 km of base
+        start_lat = base_lat + np.random.uniform(-0.4, 0.4)
+        start_lon = base_lon + np.random.uniform(-0.4, 0.4)
+        start_alt = np.random.uniform(28000, 38000)
+        start_gs = np.random.uniform(400, 480)  # knots
+        start_heading = np.random.uniform(0, 360)  # degrees
+        start_vr = np.random.uniform(-200, 200)  # fpm
+        
+        cur_lat, cur_lon, cur_alt = start_lat, start_lon, start_alt
+        cur_gs, cur_heading, cur_vr = start_gs, start_heading, start_vr
+        
+        for s in range(num_seconds):
+            ts = start_time + pd.Timedelta(seconds=s)
+            
+            # Kinematic updates per second
+            cur_heading += np.random.normal(0, 0.05)
+            cur_gs += np.random.normal(0, 0.1)
+            cur_vr += np.random.normal(0, 1.0)
+            cur_alt += (cur_vr / 60.0)
+            
+            # Distance traveled in 1 sec
+            dist_m = cur_gs * 0.514444 * 1.0
+            heading_rad = np.radians(cur_heading)
+            
+            # Lat/Lon displacement
+            dlat = (dist_m * np.cos(heading_rad)) / 111000.0
+            dlon = (dist_m * np.sin(heading_rad)) / (111000.0 * np.cos(np.radians(cur_lat)))
+            
+            cur_lat += dlat
+            cur_lon += dlon
+            
+            # Projected x, y meters relative to Lisbon receiver
+            x_m = 6371000.0 * np.radians(cur_lon - RECEIVER_LON) * np.cos(rec_lat_rad)
+            y_m = 6371000.0 * np.radians(cur_lat - RECEIVER_LAT)
+            
+            rows.append({
+                'timestamp': ts,
+                'icao24': icao,
+                'callsign': callsign,
+                'latitude': cur_lat,
+                'longitude': cur_lon,
+                'altitude': cur_alt,
+                'geoaltitude': cur_alt + np.random.normal(0, 30),
+                'groundspeed': cur_gs,
+                'heading_unwrapped': cur_heading,
+                'vertical_rate': cur_vr,
+                'x': x_m,
+                'y': y_m
+            })
+            
+    df_raw = pd.DataFrame(rows)
+    df_raw.to_csv(output_path, index=False)
+    print(f"Saved base raw dataset: {output_path} ({len(df_raw)} rows)")
+
 # ==============================================================================
 # MAIN EXECUTION
 # ==============================================================================
 if __name__ == "__main__":
+    os.makedirs("data", exist_ok=True)
     raw_train_path = "data/aero_guard_train.csv"
     raw_test_path = "data/aero_guard_test.csv"
     
-    # Make backups of original files if not already done, to use as the source dataset.
-    # We will read from the backups if they exist, otherwise rename original files to backup
-    # and then read from them. This ensures we can run this script repeatedly.
     backup_train_path = "data/aero_guard_train_backup.csv"
     backup_test_path = "data/aero_guard_test_backup.csv"
     
     if not os.path.exists(backup_train_path):
-        print("Creating backup of original training data...")
-        os.rename(raw_train_path, backup_train_path)
+        if os.path.exists(raw_train_path):
+            print("Creating backup of original training data...")
+            os.rename(raw_train_path, backup_train_path)
+        else:
+            generate_base_raw_dataset(backup_train_path, is_train=True)
+            
     if not os.path.exists(backup_test_path):
-        print("Creating backup of original testing data...")
-        os.rename(raw_test_path, backup_test_path)
+        if os.path.exists(raw_test_path):
+            print("Creating backup of original testing data...")
+            os.rename(raw_test_path, backup_test_path)
+        else:
+            generate_base_raw_dataset(backup_test_path, is_train=False)
         
     # Process Train Set
     print("\n==================== PROCESSING TRAINING SET ====================")
