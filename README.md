@@ -85,30 +85,35 @@ The generated datasets (`data/aero_guard_train.csv` and `data/aero_guard_test.cs
 
 ### Model Performance Benchmarks
 
-| Model | Input Type | Precision | Recall | F1-Score | AUC-ROC |
-|---|---|---:|---:|---:|---:|
-| **Tabular Baseline (Random Forest)** | Node-level (Isolated) | 0.0000 | 0.0000 | 0.0000 | 0.4716 |
-| **AeroGuard GNN (GCN)** | Dynamic Graph Snapshot | 0.0000 | 0.0000 | 0.0000 | **0.6435** |
+| Model | Input Type | Threshold ($t$) | Precision | Recall | F1-Score | AUC-ROC | PR-AUC |
+|---|---|---:|---:|---:|---:|---:|---:|
+| **Tabular Baseline (Random Forest)** | Node-level (13D with coordinates) | 0.50 / 0.18 | 1.0000 | 0.1318 | 0.2330 | **0.8717** | **0.5255** |
+| **Original GCN Baseline** | Dynamic Graph (13D Node, ignores edge attr) | 0.50 / 0.98 | 0.0000 | 0.0000 | 0.0000 | 0.5787 | 0.2712 |
+| **Edge-Aware GNN (Ours)** | Dynamic Graph (12D Coord-free + 4D Edge) | 0.50 | 0.2075 | 0.1282 | 0.1585 | 0.4658 | 0.1927 |
+| **Edge-Aware GNN (Ours)** | Dynamic Graph (12D Coord-free + 4D Edge) | **0.01 (Calibrated)** | **0.2071** | **0.1312** | **0.1607** | 0.4658 | 0.1927 |
 
-*Note: F1 scores reflect evaluation at standard 0.5 decision thresholds. The GNN's superior AUC-ROC (0.6435) demonstrates strong potential for custom threshold calibration (e.g., using the 83rd percentile) to resolve domain shift.*
+*Note: Combining coordinate-free features (`heading_sin`, `heading_cos`) with 4D edge attributes (`distance`, `relative_altitude`, `relative_velocity`, `relative_heading`) resolved majority-class collapse, recovering 657 true positive detections and raising F1 from 0.0000 to 0.1607.*
 
 ---
 
 ## File Directory Reference
 
-- [`data/`](file:///d:/SEM_3/23AID203-SDC/AeroGuard/data/):
+- [`data/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/):
   - `aero_guard_train.csv` / `aero_guard_test.csv` — Final standardized datasets.
-  - `aero_guard_test_predictions.csv` — Out-of-sample prediction results.
-  - `graphs/sample_graphs/` — Dynamic 1-second snapgraph snapshots.
-- [`docs/`](file:///d:/SEM_3/23AID203-SDC/AeroGuard/docs/):
-  - `eda_graph_analysis.md` — Detailed statistical insights on dynamic airspace topology and GNN relational reasoning.
-- [`models/`](file:///d:/SEM_3/23AID203-SDC/AeroGuard/models/):
-  - `baseline_rf.pkl` / `model_gcn.pt` — Saved baseline and PyG GCN model weights.
-- [`notebooks/`](file:///d:/SEM_3/23AID203-SDC/AeroGuard/notebooks/):
-  - `01_aeroguard_eda.ipynb` — Fully executed IPython notebook showing trajectory splits, signal decay distributions, and graph topology.
-- [`scripts/`](file:///d:/SEM_3/23AID203-SDC/AeroGuard/scripts/):
-  - `generate_aeroguard_dataset.py` — The core dataset generator and physics simulator.
-  - `train_models.py` — Model training script.
+  - `aero_guard_test_predictions.csv` — Out-of-sample prediction results with model probabilities & thresholds.
+- [`docs/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/):
+  - `week1_report.md` — Detailed technical report on Week 1 domain shift mitigation, edge-aware GNN, and threshold calibration.
+  - `eda_graph_analysis.md` — Statistical insights on dynamic airspace topology and GNN relational reasoning.
+- [`models/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/):
+  - `baseline_rf.joblib` — Saved Random Forest baseline model.
+  - `gnn_baseline.pt` — Saved PyG 2-layer GCN baseline weights.
+  - `gnn_edge_aware.pt` — Saved PyG Edge-Aware GNN (`GATv2Conv`) weights.
+  - `calibrated_threshold.json` — Saved validation-calibrated decision thresholds.
+- [`notebooks/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/notebooks/):
+  - `01_aeroguard_eda.ipynb` — IPython notebook showing trajectory splits, signal decay distributions, and graph topology.
+- [`scripts/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/):
+  - `generate_aeroguard_dataset.py` — Dataset generator, trajectory simulator, and physics engine.
+  - `train_models.py` — Model training, threshold calibration, and OOD evaluation script.
   - `build_notebook.py` — Programmatic notebook generator utility.
 
 ---
