@@ -1,42 +1,51 @@
-# Python
+# Python bytecode & caches
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
 dist/
 build/
 .eggs/
 *.egg
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Environments
 venv/
 env/
 .venv/
 
-# Data files
-*.csv
-*.parquet
-*.h5
-*.hdf5
-*.pkl
-*.npy
-*.npz
-data/
+# Large/generated datasets in root data directory (Keep local)
+/data/*.csv
+/data/*.parquet
+/data/*.h5
+/data/*.hdf5
+/data/*.pkl
+/data/*.npy
+/data/*.npz
+!/data/.gitkeep
 
-# Model artifacts
-*.pth
-*.pt
-*.onnx
-*.joblib
-models/
+# Obsolete / experimental model prototypes
+models/st_gnn.pt
 
-# Jupyter
+# Frontend dependencies and build outputs
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# Jupyter checkpoints
 .ipynb_checkpoints/
 
-# IDE
-.vscode/
+# IDE & OS
+.vscode/*
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
-
-# OS
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -44,6 +53,3 @@ desktop.ini
 # Logs
 *.log
 logs/
-node_modules/
-package-lock.json
-frontend/dist/

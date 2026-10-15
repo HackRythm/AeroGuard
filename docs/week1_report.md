@@ -57,7 +57,7 @@ The existing graph dataset defines a 4-dimensional edge attribute vector $e_{i,j
 The standard `GCNConv` layer in PyTorch Geometric calculates node representations according to:
 $$h_i^{(l+1)} = \sum_{j \in \mathcal{N}(i) \cup \{i\}} \frac{1}{\sqrt{\deg(i)\deg(j)}} W^{(l)} h_j^{(l)}$$
 
-Notice that `GCNConv` only accepts `(x, edge_index)` and does **not** accept `edge_attr`. 
+Notice that `GCNConv` only accepts `(x, edge_index)` and does **not** accept `edge_attr`.
 Thus, although the AeroGuard spatial graph dataset already computed and stored 4D edge attributes, **the original standard GCN completely ignored `edge_attr` during message passing**.
 
 ---

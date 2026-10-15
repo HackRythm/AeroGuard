@@ -12,9 +12,15 @@ import AlertsList from './components/AlertsList';
 export default function App() {
   const isPlaying = useAeroStore((s) => s.isPlaying);
   const tick = useAeroStore((s) => s.tick);
+  const fetchInitialData = useAeroStore((s) => s.fetchInitialData);
   const sidebarCollapsed = useAeroStore((s) => s.sidebarCollapsed);
 
-  // Real-time simulation loop
+  // Initial load from backend API
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  // Real-time playback loop
   useEffect(() => {
     if (!isPlaying) return;
     const interval = setInterval(tick, 1200);

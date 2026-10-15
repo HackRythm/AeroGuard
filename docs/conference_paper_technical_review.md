@@ -104,7 +104,7 @@ Each edge is assigned a 4-dimensional relative feature vector $\mathbf{e}_{ij}$ 
 We compared two machine learning approaches: a tabular baseline and a Graph Neural Network.
 
 ### A. Feature Scaling & Data Partitioning
-Features are scaled using a `StandardScaler` fitted on the training split and applied to the test split. 
+Features are scaled using a `StandardScaler` fitted on the training split and applied to the test split.
 - **Training Partition**: Jan 1, 2020 (85,531 records, 27 unique aircraft).
 - **Testing Partition**: Jan 2, 2020 (17,329 records, 8 unique aircraft).
 *The data is split chronologically with no overlapping aircraft to evaluate the model's generalization to new airspace sectors.*

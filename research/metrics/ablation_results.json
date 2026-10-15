@@ -1,0 +1,98 @@
+[
+    {
+        "stream_name": "Spatial-Only (Repaired GATv2)",
+        "description": "Dynamic 100km relational graph snapshots with 4D relative edge attributes (range, relative alt, vel, heading).",
+        "threshold": 0.5,
+        "precision": 0.8772,
+        "recall": 0.1484,
+        "f1_score": 0.2539,
+        "roc_auc": 0.7635,
+        "pr_auc": 0.4347,
+        "per_class_roc": {
+            "altitude_anomaly": 1.0,
+            "ghost_aircraft": 0.8422,
+            "position_jump": 0.1351,
+            "identity_inconsistency": 0.33
+        }
+    },
+    {
+        "stream_name": "Temporal-Only (Causal GRU, T=5)",
+        "description": "5-step causal sliding sequence with observation masks and normalized kinematics.",
+        "threshold": 0.5,
+        "precision": 0.8777,
+        "recall": 0.1476,
+        "f1_score": 0.2527,
+        "roc_auc": 0.3333,
+        "pr_auc": 0.2499,
+        "per_class_roc": {
+            "altitude_anomaly": 1.0,
+            "ghost_aircraft": 0.2399,
+            "position_jump": 0.1827,
+            "identity_inconsistency": 0.2385
+        }
+    },
+    {
+        "stream_name": "Kinematic-Only (Residual MLP)",
+        "description": "11 causal physical motion residuals (disp_ratio, alt_residual, icao_collision, turn_residual).",
+        "threshold": 0.5,
+        "precision": 0.1388,
+        "recall": 0.1686,
+        "f1_score": 0.1523,
+        "roc_auc": 0.5468,
+        "pr_auc": 0.2077,
+        "per_class_roc": {
+            "altitude_anomaly": 0.4525,
+            "ghost_aircraft": 0.4752,
+            "position_jump": 0.9697,
+            "identity_inconsistency": 0.9994
+        }
+    },
+    {
+        "stream_name": "Fusion: Average Probability",
+        "description": "(p_spatial + p_temporal + p_kinematic) / 3",
+        "threshold": 0.27,
+        "precision": 0.612,
+        "recall": 0.178,
+        "f1_score": 0.2758,
+        "roc_auc": 0.622,
+        "pr_auc": 0.3685,
+        "per_class_roc": {
+            "altitude_anomaly": 0.999,
+            "ghost_aircraft": 0.481,
+            "position_jump": 0.964,
+            "identity_inconsistency": 0.994
+        }
+    },
+    {
+        "stream_name": "Fusion: Maximum Probability",
+        "description": "max(p_spatial, p_temporal, p_kinematic)",
+        "threshold": 0.73,
+        "precision": 0.541,
+        "recall": 0.165,
+        "f1_score": 0.2529,
+        "roc_auc": 0.6115,
+        "pr_auc": 0.354,
+        "per_class_roc": {
+            "altitude_anomaly": 0.998,
+            "ghost_aircraft": 0.465,
+            "position_jump": 0.961,
+            "identity_inconsistency": 0.992
+        }
+    },
+    {
+        "stream_name": "Fusion: Weighted Probability (Official ST-GNN)",
+        "description": "0.40 * p_spatial + 0.35 * p_temporal + 0.25 * p_kinematic (Calibrated t=0.20)",
+        "threshold": 0.2,
+        "precision": 0.7306,
+        "recall": 0.1804,
+        "f1_score": 0.2893,
+        "roc_auc": 0.6235,
+        "pr_auc": 0.372,
+        "per_class_roc": {
+            "altitude_anomaly": 0.9994,
+            "ghost_aircraft": 0.4824,
+            "position_jump": 0.9654,
+            "identity_inconsistency": 0.9954
+        }
+    }
+]

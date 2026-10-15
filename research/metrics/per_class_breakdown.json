@@ -1,0 +1,110 @@
+{
+    "Random Forest (Tabular) (Default t=0.50)": {
+        "altitude_anomaly": {
+            "detected": 660,
+            "total": 660,
+            "recall": 1.0
+        },
+        "ghost_aircraft": {
+            "detected": 0,
+            "total": 3600,
+            "recall": 0.0
+        },
+        "identity_inconsistency": {
+            "detected": 0,
+            "total": 150,
+            "recall": 0.0
+        },
+        "normal": {
+            "detected": 0,
+            "total": 27544,
+            "recall": 0.0
+        },
+        "position_jump": {
+            "detected": 0,
+            "total": 596,
+            "recall": 0.0
+        }
+    },
+    "Random Forest (Tabular) (Calibrated t=0.15)": {
+        "altitude_anomaly": {
+            "detected": 660,
+            "total": 660,
+            "recall": 1.0
+        },
+        "ghost_aircraft": {
+            "detected": 0,
+            "total": 3600,
+            "recall": 0.0
+        },
+        "identity_inconsistency": {
+            "detected": 0,
+            "total": 150,
+            "recall": 0.0
+        },
+        "normal": {
+            "detected": 297,
+            "total": 27544,
+            "recall": 0.0108
+        },
+        "position_jump": {
+            "detected": 0,
+            "total": 596,
+            "recall": 0.0
+        }
+    },
+    "Tri-Stream ST-GNN (Ours) (Default t=0.50)": {
+        "altitude_anomaly": {
+            "detected": 660,
+            "total": 660,
+            "recall": 1.0
+        },
+        "ghost_aircraft": {
+            "detected": 76,
+            "total": 3600,
+            "recall": 0.0211
+        },
+        "identity_inconsistency": {
+            "detected": 0,
+            "total": 150,
+            "recall": 0.0
+        },
+        "normal": {
+            "detected": 98,
+            "total": 27544,
+            "recall": 0.0036
+        },
+        "position_jump": {
+            "detected": 0,
+            "total": 596,
+            "recall": 0.0
+        }
+    },
+    "Tri-Stream ST-GNN (Ours) (Calibrated (Production) t=0.20)": {
+        "altitude_anomaly": {
+            "detected": 660,
+            "total": 660,
+            "recall": 1.0
+        },
+        "ghost_aircraft": {
+            "detected": 92,
+            "total": 3600,
+            "recall": 0.0256
+        },
+        "identity_inconsistency": {
+            "detected": 150,
+            "total": 150,
+            "recall": 1.0
+        },
+        "normal": {
+            "detected": 333,
+            "total": 27544,
+            "recall": 0.0121
+        },
+        "position_jump": {
+            "detected": 1,
+            "total": 596,
+            "recall": 0.0017
+        }
+    }
+}

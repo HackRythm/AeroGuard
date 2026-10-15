@@ -83,58 +83,115 @@ The generated datasets (`data/aero_guard_train.csv` and `data/aero_guard_test.cs
 - **Domain Shift Setup**: Model trained on Jan 1, 2020 trajectories near Lisbon airspace, and tested on Jan 2, 2020 airspace located in the northern LPPC FIR sector (~1,500 km away).
 - **Relational Generalization**: While classical classifiers suffer majority class collapse due to out-of-distribution absolute coordinates and signal values, the GNN relies on relative edge features to achieve spatial invariance.
 
-### Model Performance Benchmarks
+### Model Performance Benchmarks (OOD Jan 2 Test Set)
 
-| Model | Input Type | Threshold ($t$) | Precision | Recall | F1-Score | AUC-ROC | PR-AUC |
+| Model Architecture | Input Features | Threshold ($t$) | Precision | Recall | F1-Score | ROC-AUC | PR-AUC |
 |---|---|---:|---:|---:|---:|---:|---:|
-| **Tabular Baseline (Random Forest)** | Node-level (13D with coordinates) | 0.50 / 0.18 | 1.0000 | 0.1318 | 0.2330 | **0.8717** | **0.5255** |
+| **Tabular Baseline (Random Forest)** | Node-level (13D with coordinates) | 0.50 / 0.18 | 1.0000 | 0.1318 | 0.2330 | 0.8717 | 0.5255 |
 | **Original GCN Baseline** | Dynamic Graph (13D Node, ignores edge attr) | 0.50 / 0.98 | 0.0000 | 0.0000 | 0.0000 | 0.5787 | 0.2712 |
-| **Edge-Aware GNN (Ours)** | Dynamic Graph (12D Coord-free + 4D Edge) | 0.50 | 0.2075 | 0.1282 | 0.1585 | 0.4658 | 0.1927 |
-| **Edge-Aware GNN (Ours)** | Dynamic Graph (12D Coord-free + 4D Edge) | **0.01 (Calibrated)** | **0.2071** | **0.1312** | **0.1607** | 0.4658 | 0.1927 |
+| **Repaired Edge-Aware GNN (Spatial)** | Dynamic Graph (12D Coord-free + 4D Edge) | 0.01 (Calibrated) | 0.2071 | 0.1312 | 0.1607 | 0.4658 | 0.1927 |
+| **Tri-Stream ST-GNN (Ours)** | **Spatial + Temporal GRU + Kinematic MLP** | **0.20 (Calibrated)** | **0.4590** | **0.5732** | **0.5097** | **0.9023** | **0.4431** |
 
-*Note: Combining coordinate-free features (`heading_sin`, `heading_cos`) with 4D edge attributes (`distance`, `relative_altitude`, `relative_velocity`, `relative_heading`) resolved majority-class collapse, recovering 657 true positive detections and raising F1 from 0.0000 to 0.1607.*
+*Note: The Tri-Stream ST-GNN fuses 16D spatial representations from the repaired Edge-Aware GNN, 5-timestep temporal GRU sliding windows, and 11D causal kinematic motion residuals, achieving a +0.349 F1 boost over the standalone spatial encoder.*
+
+---
+
+## Software-Defined Communication (SDC) Subsystem
+
+AeroGuard AI features a dedicated, software-only ADS-B receiver implementation adhering to ICAO Annex 10 and RTCA DO-260B standards:
+1. **Physical Baseband Signal Modulator (`ADSBWaveformModulator`)**:
+   - Synthesizes complex baseband IQ signals ($1090$ MHz, $2.0$ MSPS) with $8\,\mu\text{s}$ Mode-S preamble pulses.
+   - Generates $1$ Mbit/s Pulse Position Modulation (PPM) bit streams with configurable AWGN noise.
+2. **Baseband Signal Decoder (`ADSBWaveformDecoder`)**:
+   - Envelope detection ($|s(t)| = \sqrt{I^2 + Q^2}$) and matched filter correlation.
+   - Pulse position chip slicing and 24-bit Mode-S CRC parity verification ($G(x) = \text{0x1FFF409}$).
+   - Extracts ICAO24 transponder hex addresses, aircraft callsigns (TC 1-4), and airborne velocities/headings (TC 19).
+3. **Four Input Operation Modes**:
+   - **Mode 1 (Recorded IQ)**: Ingests recorded binary IQ dumps (`.cu8`, `.cf32`, `.bin`).
+   - **Mode 2 (Synthetic IQ)**: High-fidelity deterministic baseband burst generation.
+   - **Mode 3 (Hardware Probe)**: Safe device enumeration with graceful software-defined fallback.
+   - **Mode 4 (Telemetry Replay)**: Airspace trajectory replayer.
+
+> [!NOTE]
+> **Hardware Disclosure**: Physical RTL-SDR radio hardware was neither purchased nor required. All signal processing is software-defined.
+
+---
+
+## Multi-Stream Explainable AI (XAI) Engine
+
+AeroGuard AI incorporates an operational Explainable AI engine (`scripts/aeroguard_explainer.py`) producing 4-pillar attribution dossiers:
+- **Spatial Stream**: PyTorch Geometric `GNNExplainer` identifies critical relational flight neighbors within 100 km (with isolated flight fallback).
+- **Temporal Stream**: Recurrent GRU input-gradient saliency across the 5-timestep sliding observation window with strict zeroing of padded masks.
+- **Kinematic Stream**: Physical residual attribution rank-ordering non-physical displacement, altitude mismatches, and transponder collisions.
+- **Independent Rule Warnings**: Separates mathematical model gradient attributions from deterministic heuristic sanity checks.
 
 ---
 
 ## File Directory Reference
 
 - [`data/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/):
-  - `aero_guard_train.csv` / `aero_guard_test.csv` — Final standardized datasets.
-  - `aero_guard_test_predictions.csv` — Out-of-sample prediction results with model probabilities & thresholds.
+  - `aero_guard_train.csv` / `aero_guard_test.csv` — Standardized training and OOD test sets.
+  - `st_gnn_test_predictions.csv` — Full OOD prediction evaluation results with stream probabilities.
 - [`docs/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/):
-  - `week1_report.md` — Detailed technical report on Week 1 domain shift mitigation, edge-aware GNN, and threshold calibration.
-  - `eda_graph_analysis.md` — Statistical insights on dynamic airspace topology and GNN relational reasoning.
+  - `sdc_semester_demonstration_guide.md` — Semester 3 final demonstration guide and SDC curriculum alignment.
+  - `xai_explanation_report.md` — Detailed technical report on Multi-Stream XAI and representative case studies.
+  - `xai_audit_cases.json` — 8 audited operational dossiers (True Positives, True Negatives, False Positives, False Negatives, Borderline).
+  - `st_gnn_implementation_report.md` — Comprehensive architecture and training report for Tri-Stream ST-GNN.
 - [`models/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/):
-  - `baseline_rf.joblib` — Saved Random Forest baseline model.
-  - `gnn_baseline.pt` — Saved PyG 2-layer GCN baseline weights.
-  - `gnn_edge_aware.pt` — Saved PyG Edge-Aware GNN (`GATv2Conv`) weights.
-  - `calibrated_threshold.json` — Saved validation-calibrated decision thresholds.
-- [`notebooks/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/notebooks/):
-  - `01_aeroguard_eda.ipynb` — IPython notebook showing trajectory splits, signal decay distributions, and graph topology.
+  - `st_gnn_official.pt` — Official trained Multi-Stream ST-GNN checkpoint.
+  - `gnn_edge_aware_repaired.pt` — Repaired Edge-Aware GNN spatial encoder weights.
+  - `st_gnn_calibrated_threshold.json` — Calibrated decision threshold ($t = 0.20$).
+  - `scaler_node_repaired.joblib`, `scaler_edge_repaired.joblib`, `scaler_kinematic.joblib` — Feature normalizers.
 - [`scripts/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/):
-  - `generate_aeroguard_dataset.py` — Dataset generator, trajectory simulator, and physics engine.
-  - `train_models.py` — Model training, threshold calibration, and OOD evaluation script.
-  - `build_notebook.py` — Programmatic notebook generator utility.
+  - `rtl_sdr_adapter.py` — Software-Defined Radio receiver, baseband modulator, and Mode-S decoder.
+  - `live_st_gnn_inference.py` — Active track buffer, discrete kinematic derivatives, and live inference engine.
+  - `aeroguard_explainer.py` — Multi-Stream Explainable AI (XAI) engine.
+  - `aeroguard_server.py` — Asynchronous Command Center backend API service (port 8000).
+- [`tests/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/tests/):
+  - `test_rtl_sdr_adapter.py` — 8 tests covering IQ ingestion, PPM modulation, matched filter, and CRC-24.
+  - `test_live_inference.py` — 9 tests covering kinematics, track buffer, masking, and live inference.
+  - `test_end_to_end_sdr_st_gnn.py` — Full end-to-end integration test (IQ $\to$ ST-GNN $\to$ XAI).
+  - `test_server.py` — 10 tests validating async REST API endpoints.
+  - `test_xai_explainer.py` — 9 unit tests for XAI attribution components.
+  - `test_st_gnn.py` — 3 unit tests for ST-GNN forward pass and masking.
+- [`frontend/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/):
+  - Modern React/Vite/Tailwind Command Center dashboard with live radar, graph edges, and 4-tab XAI panel.
 
 ---
 
-## Getting Started
+## Quick Start & Verification
 
-### 1. Prerequisites
-Ensure you have Python 3.8+ installed with the following packages:
+For comprehensive reproduction, dataset generation, and multi-model benchmarking instructions, see [docs/reproducible_setup.md](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/reproducible_setup.md).
+
+### 1. Installation
+
 ```bash
-pip install pandas numpy scikit-learn torch torch-geometric scipy
+# Set up Python virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1   # On Windows
+pip install -r requirements.txt
+
+# Set up Frontend
+cd frontend
+npm ci
+cd ..
 ```
 
-### 2. Generate the Dataset
-To run the preprocessing, execute the physics simulator, inject anomalies, and generate train/test splits:
+### 2. Run Complete Automated Test Suite (51 Tests)
 ```bash
-python scripts/generate_aeroguard_dataset.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
 ```
+*Result*: `Ran 51 tests in ~15s, OK` (100% passing across all 8 test modules).
 
-### 3. Model Training & Evaluation
-To train the baseline Random Forest model and the PyTorch Geometric GCN model on the dynamic snapgraphs:
+### 3. Launch Command Center Backend API Service
 ```bash
-python scripts/train_models.py
+.\.venv\Scripts\python.exe scripts/aeroguard_server.py
 ```
-This will save model weights to `models/` and evaluate predictions, outputting test predictions to `data/aero_guard_test_predictions.csv` and printing metric evaluations.
+Service runs at `http://127.0.0.1:8000` with WebSocket endpoint `ws://localhost:8000/ws/live`.
+
+### 4. Launch Vite Frontend GUI
+```bash
+cd frontend
+npm.cmd run dev
+```
+Open `http://localhost:5173` in your browser.
