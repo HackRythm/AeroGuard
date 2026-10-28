@@ -261,14 +261,21 @@ def run_research_benchmark_evaluation(
         os.makedirs(output_dir, exist_ok=True)
 
     # 1. Load Ground Truth & Predictions
-    assert os.path.exists(pred_path), f"Missing base predictions artifact: {pred_path}"
-    assert os.path.exists(st_pred_path), f"Missing ST-GNN predictions artifact: {st_pred_path}"
-
-    df_base = pd.read_csv(pred_path, low_memory=False)
+    assert os.path.exists(st_pred_path), (
+        f"Missing ST-GNN predictions artifact: {st_pred_path}.\n"
+        f"Please run 'python scripts/audit_st_gnn_metrics.py' first."
+    )
     df_st = pd.read_csv(st_pred_path, low_memory=False)
-
-    assert len(df_base) == 32550, f"Expected 32550 test samples in df_base, got {len(df_base)}"
     assert len(df_st) == 32550, f"Expected 32550 test samples in df_st, got {len(df_st)}"
+
+    df_base = None
+    if os.path.exists(pred_path):
+        df_base = pd.read_csv(pred_path, low_memory=False)
+        assert len(df_base) == 32550, f"Expected 32550 test samples in df_base, got {len(df_base)}"
+    else:
+        print(f"[NOTICE] Baseline predictions file not found: {pred_path}")
+        print(f"         Historical baseline models (Random Forest, GCN, Historical Edge-Aware GNN) will be marked as SKIPPED.")
+        print(f"         To regenerate baseline predictions from scratch, execute: python scripts/train_models.py")
 
     y_true = df_st['label'].values
     num_normal = int(np.sum(y_true == 0))
@@ -305,21 +312,27 @@ def run_research_benchmark_evaluation(
             "input_type": "13D Node (with absolute coordinates)",
             "prob_col": "rf_prob",
             "df_source": df_base,
-            "thresholds": [("Default", 0.50), ("Calibrated", float(df_base['threshold_rf'].iloc[0]))]
+            "source_path": pred_path,
+            "generation_script": "scripts/train_models.py",
+            "thresholds": [("Default", 0.50), ("Calibrated", float(df_base['threshold_rf'].iloc[0]))] if df_base is not None else [("Default", 0.50)]
         },
         {
             "name": "Original GCN Baseline",
             "input_type": "Dynamic Graph (13D Node, unweighted edges)",
             "prob_col": "gnn_baseline_prob",
             "df_source": df_base,
-            "thresholds": [("Default", 0.50), ("Calibrated", float(df_base['threshold_gnn_baseline'].iloc[0]))]
+            "source_path": pred_path,
+            "generation_script": "scripts/train_models.py",
+            "thresholds": [("Default", 0.50), ("Calibrated", float(df_base['threshold_gnn_baseline'].iloc[0]))] if df_base is not None else [("Default", 0.50)]
         },
         {
             "name": "Edge-Aware GNN (Historical Defective)",
             "input_type": "GATv2 (12D Node, 4D Edge with double-scaling bug)",
             "prob_col": "gnn_edge_aware_prob",
             "df_source": df_base,
-            "thresholds": [("Default", 0.50), ("Calibrated", float(df_base['threshold_gnn_edge_aware'].iloc[0]))]
+            "source_path": pred_path,
+            "generation_script": "scripts/train_models.py",
+            "thresholds": [("Default", 0.50), ("Calibrated", float(df_base['threshold_gnn_edge_aware'].iloc[0]))] if df_base is not None else [("Default", 0.50)]
         },
         {
             "name": "Repaired Edge-Aware GNN (Spatial Stream)",
@@ -348,7 +361,8 @@ def run_research_benchmark_evaluation(
 
         # Handle unavailable artifacts without substituting or inventing values
         if df_src is None or m["prob_col"] not in df_src.columns:
-            print(f"[UNAVAILABLE] Predictions for '{m_name}' unavailable. Missing artifact: {m.get('source_path')}")
+            gen_script = m.get("generation_script", "scripts/audit_st_gnn_metrics.py")
+            print(f"[UNAVAILABLE] Predictions for '{m_name}' unavailable. Missing artifact: {m.get('source_path')} (Run: python {gen_script})")
             entry = {
                 "model_name": m_name,
                 "input_structure": input_type,
@@ -356,7 +370,7 @@ def run_research_benchmark_evaluation(
                 "threshold": None,
                 "status": "UNAVAILABLE",
                 "missing_artifact": m.get("source_path"),
-                "generation_script": "scripts/audit_st_gnn_metrics.py"
+                "generation_script": gen_script
             }
             benchmark_results.append(entry)
             continue
@@ -426,11 +440,20 @@ def run_research_benchmark_evaluation(
         per_class_out_path = os.path.join(output_dir, "per_class_breakdown.json")
         hist_out_path = os.path.join(output_dir, "historical_unaligned_benchmarks.json")
 
-        with open(bench_out_path, "w") as f:
-            json.dump(benchmark_results, f, indent=4)
+        # Do not overwrite audited benchmark files with incomplete/unavailable baselines if full file exists
+        if df_base is None and os.path.exists(bench_out_path):
+            print(f"\n[PRESERVED] {bench_out_path} preserved intact (baseline models skipped; full audited metrics retained).")
+        else:
+            with open(bench_out_path, "w") as f:
+                json.dump(benchmark_results, f, indent=4)
+            print(f"\n[SAVED] {bench_out_path}")
 
-        with open(per_class_out_path, "w") as f:
-            json.dump(per_class_results, f, indent=4)
+        if df_base is None and os.path.exists(per_class_out_path):
+            print(f"[PRESERVED] {per_class_out_path} preserved intact.")
+        else:
+            with open(per_class_out_path, "w") as f:
+                json.dump(per_class_results, f, indent=4)
+            print(f"[SAVED] {per_class_out_path}")
 
         hist_payload = {
             "audit_description": "Historical benchmark comparison metrics computed prior to observation-level composite key alignment. These numbers were generated by an index-misalignment artifact where timestamp-sorted baseline predictions in data/aero_guard_test_predictions.csv were evaluated against flight-sorted labels in data/st_gnn_test_predictions.csv. They are preserved strictly as an audit trail and must not be presented as valid benchmark results in scientific publications.",

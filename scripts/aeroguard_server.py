@@ -105,6 +105,11 @@ class AeroGuardServerState:
 
         # 4. Load precomputed test predictions
         test_path = "data/st_gnn_test_predictions.csv"
+        if not os.path.exists(test_path):
+            raise FileNotFoundError(
+                f"[AeroGuard Server] Missing required prediction artifact: '{test_path}'.\n"
+                f"Please generate the test predictions by running 'python scripts/audit_st_gnn_metrics.py' first."
+            )
         self.df_preds = pd.read_csv(test_path, low_memory=False)
         self.df_preds['icao24'] = self.df_preds['icao24'].astype(str)
 

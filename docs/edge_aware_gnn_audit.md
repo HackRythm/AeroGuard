@@ -17,7 +17,7 @@ This audit identified the **exact root causes** through empirical verification a
 3. **Geographic Domain Shift in Signal-Layer Features**: Features such as Received Signal Strength (`estimated_rss_dbm`) and Signal-to-Noise Ratio (`estimated_snr_db`) acted as absolute distance proxies to the Lisbon receiver, shifting the test distribution far out-of-distribution when evaluated on Northern European airspace.
 4. **Single-Snapshot Spatial Limitations**: Anomalies such as `ghost_aircraft`, `position_jump`, and `identity_inconsistency` have kinematics that mimic valid cruising flights at an isolated 1-second instant, requiring multi-timestep temporal sequence processing.
 
-When these implementation defects were corrected in an isolated, repaired implementation ([`scripts/train_edge_aware_repaired.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/train_edge_aware_repaired.py)), the Edge-Aware GNN achieved:
+When these implementation defects were corrected in an isolated, repaired implementation ([`scripts/train_edge_aware_repaired.py`](../scripts/train_edge_aware_repaired.py)), the Edge-Aware GNN achieved:
 - **ROC-AUC**: **0.7635** (improved from 0.4658)
 - **PR-AUC**: **0.4346** (improved from 0.1927)
 - **Precision at $t=0.50$**: **0.8772** (improved from 0.2075)
@@ -31,7 +31,7 @@ The repaired Edge-Aware GNN is **verified and fully suitable as the spatial enco
 ## 2. Investigation of the Original Failure & Evidence
 
 ### 2.1 The Apparent Failure in Week 1 Documentation
-In [`docs/week1_report.md`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/week1_report.md), the historical benchmark table recorded:
+In [`docs/week1_report.md`](./week1_report.md), the historical benchmark table recorded:
 - **Edge-Aware GNN (Default $t=0.50$)**: Precision = 0.2075, Recall = 0.1282, F1 = 0.1585, ROC-AUC = **0.4658**, PR-AUC = **0.1927**.
 - **Edge-Aware GNN (Calibrated $t=0.01$)**: Precision = 0.2071, Recall = 0.1312, F1 = 0.1607, ROC-AUC = **0.4658**, PR-AUC = **0.1927**.
 - **Confusion Matrix ($t=0.50$)**: TN = 25,092, FP = 2,452, FN = 4,364, TP = 642.
@@ -51,7 +51,7 @@ Because ROC-AUC was below 0.50, the model appeared to perform inversely to true 
   ```
   The code directly compared `df_test['label'].values` (ordered by `icao24`, then `timestamp`) against `edge_test_probs` (ordered by `timestamp`, then `icao24`).
 - **Empirical Proof**:
-  Running evaluation on the exact frozen Week 1 model weights ([`models/gnn_edge_aware.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_edge_aware.pt)) with correct snapshot label alignment versus dataframe row order yielded:
+  Running evaluation on the exact frozen Week 1 model weights ([`models/gnn_edge_aware.pt`](../models/gnn_edge_aware.pt)) with correct snapshot label alignment versus dataframe row order yielded:
   - **With Scrambled Alignment (`df_test['label']`)**: ROC-AUC = **0.4578**, PR-AUC = **0.1884** (matching Week 1 report).
   - **With Correct Snapshot Alignment (`snap.y`)**: ROC-AUC = **0.6552**, PR-AUC = **0.3086**.
   The same misalignment corrupted validation calibration, forcing the threshold sweep to select $t=0.01$.
@@ -162,14 +162,14 @@ Evaluating the detection rates by individual anomaly category reveals the exact 
 To prevent conflicting baseline models while ensuring reproducibility, all changes have been isolated:
 
 1. **Repaired Training & Validation Script**:
-   [`scripts/train_edge_aware_repaired.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/train_edge_aware_repaired.py)
+   [`scripts/train_edge_aware_repaired.py`](../scripts/train_edge_aware_repaired.py)
    - Runs cleanly and deterministically.
    - Preserves historical baselines in `scripts/train_models.py` untouched.
 2. **Repaired Model Weights**:
-   [`models/gnn_edge_aware_repaired.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_edge_aware_repaired.pt)
+   [`models/gnn_edge_aware_repaired.pt`](../models/gnn_edge_aware_repaired.pt)
 3. **Repaired Scalers**:
-   [`models/scaler_node_repaired.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_node_repaired.joblib)<br/>
-   [`models/scaler_edge_repaired.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_edge_repaired.joblib)
+   [`models/scaler_node_repaired.joblib`](../models/scaler_node_repaired.joblib)<br/>
+   [`models/scaler_edge_repaired.joblib`](../models/scaler_edge_repaired.joblib)
 
 ---
 

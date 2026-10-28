@@ -11,11 +11,11 @@
 ## 1. Executive Summary & Verification Verdict
 
 An independent, mathematical audit was performed on all official ST-GNN experimental artifacts:
-* Architecture: [`scripts/st_gnn_model.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/st_gnn_model.py)
-* Training Pipeline: [`scripts/train_st_gnn.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/train_st_gnn.py)
-* Checkpoints: [`models/st_gnn_official.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_official.pt) & [`models/gnn_edge_aware_repaired.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_edge_aware_repaired.pt)
-* Threshold Metadata: [`models/st_gnn_calibrated_threshold.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_calibrated_threshold.json)
-* Predictions CSV: [`data/st_gnn_test_predictions.csv`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/st_gnn_test_predictions.csv)
+* Architecture: [`scripts/st_gnn_model.py`](../scripts/st_gnn_model.py)
+* Training Pipeline: [`scripts/train_st_gnn.py`](../scripts/train_st_gnn.py)
+* Checkpoints: [`models/st_gnn_official.pt`](../models/st_gnn_official.pt) & [`models/gnn_edge_aware_repaired.pt`](../models/gnn_edge_aware_repaired.pt)
+* Threshold Metadata: [`models/st_gnn_calibrated_threshold.json`](../models/st_gnn_calibrated_threshold.json)
+* Predictions CSV: [`data/st_gnn_test_predictions.csv`](../data/st_gnn_test_predictions.csv)
 
 ### Verdict
 The official ST-GNN checkpoint and test predictions are **100% reproducible** from raw test data without retraining (maximum probability divergence $\le 8.72 \times 10^{-8}$).
@@ -26,7 +26,7 @@ The multi-stream ST-GNN successfully resolves the transponder cloning vulnerabil
 
 ## 2. Recalculated Overall Metrics & Confusion Matrix Arithmetic
 
-All metrics were independently recalculated directly from [`data/st_gnn_test_predictions.csv`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/st_gnn_test_predictions.csv) using continuous scores (`st_gnn_prob`) and true labels (`label`):
+All metrics were independently recalculated directly from [`data/st_gnn_test_predictions.csv`](../data/st_gnn_test_predictions.csv) using continuous scores (`st_gnn_prob`) and true labels (`label`):
 
 ### 2.1 Test Set Ground Truth Verification
 * **Total Observations**: $32,550$
@@ -144,9 +144,9 @@ A comprehensive code and tensor audit was executed:
 
 ## 6. Exact Reproduction Audit
 
-The official pipeline was executed to reproduce inference from scratch using [`models/st_gnn_official.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_official.pt):
-- **Script Executed**: [`scripts/audit_st_gnn_metrics.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/audit_st_gnn_metrics.py)
-- **Output Generated**: [`data/reproduced_st_gnn_predictions.csv`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/reproduced_st_gnn_predictions.csv)
+The official pipeline was executed to reproduce inference from scratch using [`models/st_gnn_official.pt`](../models/st_gnn_official.pt):
+- **Script Executed**: [`scripts/audit_st_gnn_metrics.py`](../scripts/audit_st_gnn_metrics.py)
+- **Output Generated**: [`data/reproduced_st_gnn_predictions.csv`](../data/reproduced_st_gnn_predictions.csv)
 - **Probability Comparison**:
   - Maximum absolute divergence: $8.7225 \times 10^{-8}$
   - Mean absolute divergence: $2.2166 \times 10^{-9}$
@@ -157,7 +157,7 @@ The official pipeline was executed to reproduce inference from scratch using [`m
 ## 7. Discrepancies Identified & Recommendations
 
 ### Discrepancy 1: `AeroGuardSTGNN.forward()` Default vs. Evaluated Weighted Fusion
-* **Observation**: In [`scripts/st_gnn_model.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/st_gnn_model.py), the `AeroGuardSTGNN` class defines a parametric weight `self.prob_weights = nn.Parameter(torch.tensor([0.33, 0.34, 0.33]))`. However, in [`scripts/train_st_gnn.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/train_st_gnn.py), the evaluated fused probabilities use the explicit validation-selected weights:
+* **Observation**: In [`scripts/st_gnn_model.py`](../scripts/st_gnn_model.py), the `AeroGuardSTGNN` class defines a parametric weight `self.prob_weights = nn.Parameter(torch.tensor([0.33, 0.34, 0.33]))`. However, in [`scripts/train_st_gnn.py`](../scripts/train_st_gnn.py), the evaluated fused probabilities use the explicit validation-selected weights:
   $$p_{\text{fused}} = 0.40 \cdot p_{\text{spatial}} + 0.35 \cdot p_{\text{temporal}} + 0.25 \cdot p_{\text{kinematic}}$$
 * **Justified Fix**: Set `self.prob_weights` or explicit stream weights $[0.40, 0.35, 0.25]$ in the model's inference method to guarantee that calling `model.forward()` directly produces identical results to the evaluated pipeline.
 

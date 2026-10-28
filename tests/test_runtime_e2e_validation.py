@@ -12,6 +12,7 @@ Validates:
 5. SDR waveform decoder boundary with synthetic IQ, noise, and truncated packets.
 """
 
+import os
 import unittest
 import asyncio
 import json
@@ -24,6 +25,10 @@ from scripts.aeroguard_server import create_app, state, live_buffer, live_pipeli
 from scripts.rtl_sdr_adapter import ADSBWaveformDecoder, ADSBWaveformModulator
 
 
+@unittest.skipUnless(
+    os.path.exists("data/st_gnn_test_predictions.csv"),
+    "Requires generated prediction artifact: data/st_gnn_test_predictions.csv (generate via 'python scripts/audit_st_gnn_metrics.py')"
+)
 class TestAeroGuardRuntimeE2E(AioHTTPTestCase):
 
     async def get_application(self):

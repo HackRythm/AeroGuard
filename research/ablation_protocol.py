@@ -462,6 +462,7 @@ def run_ablation_audit(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AeroGuard AI Dynamic Multi-Stream Ablation Study")
     parser.add_argument("--execute-retraining", action="store_true", help="Requires explicit user approval to execute model retraining.")
+    parser.add_argument("--save-artifacts", action="store_true", help="Explicitly overwrite JSON artifacts in output-dir.")
     parser.add_argument("--predictions", type=str, default="data/reproduced_st_gnn_predictions.csv", help="Path to predictions CSV")
     parser.add_argument("--test-csv", type=str, default="data/aero_guard_test.csv", help="Path to ground-truth test CSV")
     parser.add_argument("--output-dir", type=str, default="research/metrics", help="Directory for JSON metrics")
@@ -471,6 +472,6 @@ if __name__ == "__main__":
         repro_path=args.predictions,
         aero_test_path=args.test_csv,
         output_dir=args.output_dir,
-        save_artifacts=True,
+        save_artifacts=args.save_artifacts,
         execute_retraining=args.execute_retraining
     )

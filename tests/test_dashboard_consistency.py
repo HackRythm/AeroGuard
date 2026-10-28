@@ -16,6 +16,10 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 from scripts.aeroguard_server import create_app, state, build_snapshot_dict
 
+@unittest.skipUnless(
+    os.path.exists("data/st_gnn_test_predictions.csv"),
+    "Requires generated prediction artifact: data/st_gnn_test_predictions.csv (generate via 'python scripts/audit_st_gnn_metrics.py')"
+)
 class TestDashboardConsistency(AioHTTPTestCase):
     @classmethod
     def setUpClass(cls):

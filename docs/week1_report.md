@@ -13,7 +13,7 @@ This report presents the implementation and empirical evaluation for **Week 1 of
 ### Baseline Models
 1. **Tabular Baseline (Random Forest)**:
    - Architecture: `RandomForestClassifier(n_estimators=100, max_depth=12, random_state=42)`.
-   - Saved artifact: [`models/baseline_rf.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/baseline_rf.joblib).
+   - Saved artifact: [`models/baseline_rf.joblib`](../models/baseline_rf.joblib).
    - Features: 13 node-level features including geographic coordinates (`latitude`, `longitude`).
 
 2. **Standard GCN Baseline**:
@@ -21,7 +21,7 @@ This report presents the implementation and empirical evaluation for **Week 1 of
      - Layer 1: `GCNConv(13, 32)` + ReLU
      - Layer 2: `GCNConv(32, 16)` + ReLU
      - Classifier: `Linear(16, 2)`
-   - Saved artifact: [`models/gnn_baseline.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_baseline.pt).
+   - Saved artifact: [`models/gnn_baseline.pt`](../models/gnn_baseline.pt).
 
 ---
 
@@ -97,7 +97,7 @@ class EdgeAwareGNN(nn.Module):
         x = torch.relu(x)
         return self.classifier(x)
 ```
-Saved artifact: [`models/gnn_edge_aware.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_edge_aware.pt).
+Saved artifact: [`models/gnn_edge_aware.pt`](../models/gnn_edge_aware.pt).
 
 ---
 
@@ -114,7 +114,7 @@ To prevent temporal leakage in trajectory time-series data:
 Models were trained on the training subset, and their decision thresholds were calibrated on the validation subset by sweeping $t \in [0.01, 0.99]$ in steps of 0.01 to maximize **Validation F1-score**.
 
 ### Saved Calibrated Thresholds
-File: [`models/calibrated_threshold.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/calibrated_threshold.json)
+File: [`models/calibrated_threshold.json`](../models/calibrated_threshold.json)
 - **Random Forest**: Calibrated Threshold = `0.18` (Validation F1 = 0.6353)
 - **Original GCN**: Calibrated Threshold = `0.98` (Validation F1 = 0.0059)
 - **Edge-Aware GNN**: Calibrated Threshold = `0.01` (Validation F1 = 0.1364)
@@ -190,11 +190,11 @@ True Anomaly (1)       4,349                   657
 
 The following verified artifacts were produced during Week 1 execution:
 
-- [`models/baseline_rf.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/baseline_rf.joblib) — Saved baseline Random Forest weights.
-- [`models/gnn_baseline.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_baseline.pt) — Saved baseline PyG GCN weights.
-- [`models/gnn_edge_aware.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_edge_aware.pt) — Saved Edge-Aware GNN (`GATv2Conv`) weights.
-- [`models/calibrated_threshold.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/calibrated_threshold.json) — Saved validation calibrated thresholds.
-- [`data/aero_guard_test_predictions.csv`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/aero_guard_test_predictions.csv) — Out-of-sample predictions containing probabilities, predicted labels, thresholds, and anomaly types.
+- [`models/baseline_rf.joblib`](../models/baseline_rf.joblib) — Saved baseline Random Forest weights.
+- [`models/gnn_baseline.pt`](../models/gnn_baseline.pt) — Saved baseline PyG GCN weights.
+- [`models/gnn_edge_aware.pt`](../models/gnn_edge_aware.pt) — Saved Edge-Aware GNN (`GATv2Conv`) weights.
+- [`models/calibrated_threshold.json`](../models/calibrated_threshold.json) — Saved validation calibrated thresholds.
+- [`data/aero_guard_test_predictions.csv`](../data/aero_guard_test_predictions.csv) — Out-of-sample predictions containing probabilities, predicted labels, thresholds, and anomaly types.
 
 ---
 

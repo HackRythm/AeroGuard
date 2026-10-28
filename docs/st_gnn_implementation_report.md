@@ -3,9 +3,9 @@
 **Document**: `docs/st_gnn_implementation_report.md`
 **Date**: October 2026
 **Status**: Implemented, Verified & Independently Evaluated
-**Model Checkpoint**: [`models/st_gnn_official.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_official.pt)
-**Calibrated Threshold Metadata**: [`models/st_gnn_calibrated_threshold.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_calibrated_threshold.json)
-**Test Predictions**: [`data/st_gnn_test_predictions.csv`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/st_gnn_test_predictions.csv)
+**Model Checkpoint**: [`models/st_gnn_official.pt`](../models/st_gnn_official.pt)
+**Calibrated Threshold Metadata**: [`models/st_gnn_calibrated_threshold.json`](../models/st_gnn_calibrated_threshold.json)
+**Test Predictions**: [`data/st_gnn_test_predictions.csv`](../data/st_gnn_test_predictions.csv)
 
 ---
 
@@ -33,8 +33,8 @@ The pipeline was trained strictly on the Jan 1 training subset (80%, 77,910 rows
 ## 2. Spatial Encoder Verification
 
 The repaired spatial encoder was preserved and verified prior to integration:
-- **Weights File**: [`models/gnn_edge_aware_repaired.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_edge_aware_repaired.pt) (preserved without retraining or overwriting).
-- **Matching Scalers**: [`models/scaler_node_repaired.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_node_repaired.joblib) (12 features) and [`models/scaler_edge_repaired.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_edge_repaired.joblib) (4 features).
+- **Weights File**: [`models/gnn_edge_aware_repaired.pt`](../models/gnn_edge_aware_repaired.pt) (preserved without retraining or overwriting).
+- **Matching Scalers**: [`models/scaler_node_repaired.joblib`](../models/scaler_node_repaired.joblib) (12 features) and [`models/scaler_edge_repaired.joblib`](../models/scaler_edge_repaired.joblib) (4 features).
 - **Embedding Interface**: `extract_spatial_embeddings(x, edge_index, edge_attr)` was verified to exist and returned exact tensor dimensions `[N, 16]`.
 - **Status during ST-GNN Integration**: All spatial weights were frozen (`requires_grad = False`), isolating the spatial representation and ensuring that the temporal and kinematic streams learned complementary temporal dynamics rather than re-fitting spatial features.
 
@@ -206,20 +206,20 @@ True Anomaly (1)           4,103                   903
 ## 8. Summary of Files Created & Modified
 
 1. **Repaired Spatial Model Artifacts (Preserved)**:
-   - [`models/gnn_edge_aware_repaired.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_edge_aware_repaired.pt)
-   - [`models/scaler_node_repaired.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_node_repaired.joblib)
-   - [`models/scaler_edge_repaired.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_edge_repaired.joblib)
-   - [`scripts/train_edge_aware_repaired.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/train_edge_aware_repaired.py)
-   - [`docs/edge_aware_gnn_audit.md`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/edge_aware_gnn_audit.md)
+   - [`models/gnn_edge_aware_repaired.pt`](../models/gnn_edge_aware_repaired.pt)
+   - [`models/scaler_node_repaired.joblib`](../models/scaler_node_repaired.joblib)
+   - [`models/scaler_edge_repaired.joblib`](../models/scaler_edge_repaired.joblib)
+   - [`scripts/train_edge_aware_repaired.py`](../scripts/train_edge_aware_repaired.py)
+   - [`docs/edge_aware_gnn_audit.md`](./edge_aware_gnn_audit.md)
 2. **ST-GNN Architecture & Pipeline**:
-   - [`scripts/st_gnn_model.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/st_gnn_model.py) — Defines `TemporalGRUStream`, `KinematicStream`, and `AeroGuardSTGNN`.
-   - [`scripts/train_st_gnn.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/train_st_gnn.py) — End-to-end multi-stream training, fusion comparison, and independent evaluation pipeline.
+   - [`scripts/st_gnn_model.py`](../scripts/st_gnn_model.py) — Defines `TemporalGRUStream`, `KinematicStream`, and `AeroGuardSTGNN`.
+   - [`scripts/train_st_gnn.py`](../scripts/train_st_gnn.py) — End-to-end multi-stream training, fusion comparison, and independent evaluation pipeline.
 3. **Tests**:
-   - [`tests/test_st_gnn.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/tests/test_st_gnn.py) — Unit and integration test suite (4/4 tests passing).
+   - [`tests/test_st_gnn.py`](../tests/test_st_gnn.py) — Unit and integration test suite (4/4 tests passing).
 4. **Official Artifacts**:
-   - [`models/st_gnn_official.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_official.pt) — Frozen, calibrated ST-GNN model weights.
-   - [`models/scaler_kinematic.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_kinematic.joblib) — Kinematic branch scaler.
-   - [`models/st_gnn_calibrated_threshold.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_calibrated_threshold.json) — Calibrated threshold metadata.
-   - [`data/st_gnn_test_predictions.csv`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/st_gnn_test_predictions.csv) — Out-of-sample test predictions.
+   - [`models/st_gnn_official.pt`](../models/st_gnn_official.pt) — Frozen, calibrated ST-GNN model weights.
+   - [`models/scaler_kinematic.joblib`](../models/scaler_kinematic.joblib) — Kinematic branch scaler.
+   - [`models/st_gnn_calibrated_threshold.json`](../models/st_gnn_calibrated_threshold.json) — Calibrated threshold metadata.
+   - [`data/st_gnn_test_predictions.csv`](../data/st_gnn_test_predictions.csv) — Out-of-sample test predictions.
 5. **Documentation**:
-   - [`docs/st_gnn_implementation_report.md`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/st_gnn_implementation_report.md) — Comprehensive technical report.
+   - [`docs/st_gnn_implementation_report.md`](./st_gnn_implementation_report.md) — Comprehensive technical report.

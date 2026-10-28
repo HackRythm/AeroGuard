@@ -4,10 +4,10 @@
 **Date**: October 2026
 **Status**: Validated & Independently Audited
 **Components**: Spatial GNNExplainer, Recurrent Temporal Saliency, Kinematic Residual Sensitivity, Unified ATC Dossier
-**Checkpoints Evaluated**: [`models/st_gnn_official.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_official.pt) & [`models/gnn_edge_aware_repaired.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/gnn_edge_aware_repaired.pt)
-**Calibrated Threshold**: $t = 0.20$ ([`models/st_gnn_calibrated_threshold.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_calibrated_threshold.json))
-**Audited Cases Dataset**: [`docs/xai_audit_cases.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/xai_audit_cases.json)
-**Test Suite**: [`tests/test_xai_explainer.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/tests/test_xai_explainer.py) (9/9 unit tests passing)
+**Checkpoints Evaluated**: [`models/st_gnn_official.pt`](../models/st_gnn_official.pt) & [`models/gnn_edge_aware_repaired.pt`](../models/gnn_edge_aware_repaired.pt)
+**Calibrated Threshold**: $t = 0.20$ ([`models/st_gnn_calibrated_threshold.json`](../models/st_gnn_calibrated_threshold.json))
+**Audited Cases Dataset**: [`docs/xai_audit_cases.json`](./xai_audit_cases.json)
+**Test Suite**: [`tests/test_xai_explainer.py`](../tests/test_xai_explainer.py) (9/9 unit tests passing)
 
 ---
 
@@ -68,7 +68,7 @@ In air traffic control (ATC) cybersecurity operations, black-box anomaly detecti
 
 ## 3. Systematic Case Audit & Empirical Verification
 
-Using [`scripts/audit_xai_cases.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/audit_xai_cases.py), the XAI engine was evaluated across 8 representative test cases from the out-of-distribution (OOD) Jan 2 evaluation set.
+Using [`scripts/audit_xai_cases.py`](../scripts/audit_xai_cases.py), the XAI engine was evaluated across 8 representative test cases from the out-of-distribution (OOD) Jan 2 evaluation set.
 
 ### 3.1 Summary Audit Matrix
 
@@ -139,7 +139,7 @@ Using [`scripts/audit_xai_cases.py`](file:///d:/SEM_3/SDC/project%20code/AeroGua
 
 ## 5. Automated Verification & Unit Test Suite
 
-The test suite in [`tests/test_xai_explainer.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/tests/test_xai_explainer.py) contains 9 dedicated tests covering all requirements:
+The test suite in [`tests/test_xai_explainer.py`](../tests/test_xai_explainer.py) contains 9 dedicated tests covering all requirements:
 
 | Test Name | Coverage & Invariants Verified | Status |
 |---|---|:---:|

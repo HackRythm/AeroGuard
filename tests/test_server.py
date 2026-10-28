@@ -17,6 +17,10 @@ import unittest
 from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 from scripts.aeroguard_server import create_app, state
 
+@unittest.skipUnless(
+    os.path.exists("data/st_gnn_test_predictions.csv"),
+    "Requires generated prediction artifact: data/st_gnn_test_predictions.csv (generate via 'python scripts/audit_st_gnn_metrics.py')"
+)
 class TestAeroGuardServer(AioHTTPTestCase):
     @classmethod
     def setUpClass(cls):

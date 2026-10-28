@@ -32,11 +32,11 @@ This phenomenon was caused by a combination of **legitimate model cold-start phy
 * **Verdict**: The counters `Total Tracked: 9`, `Active Anomalies: 9`, and `Graph: 9 nodes, 9 anomalies` are **100% mathematically and architecturally consistent**.
 
 #### Factor B: The "Markers Labelled NORMAL" Semantic Collision Bug
-* **Dataset Structure**: In [`data/st_gnn_test_predictions.csv`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/st_gnn_test_predictions.csv), the column `anomaly_type` records the **offline synthetic ground-truth injection category**:
+* **Dataset Structure**: In [`data/st_gnn_test_predictions.csv`](../data/st_gnn_test_predictions.csv), the column `anomaly_type` records the **offline synthetic ground-truth injection category**:
   - `500001` through `500008` have `anomaly_type = "normal"` and `label = 0` (normal commercial flights).
   - `e00002` has `anomaly_type = "ghost_aircraft"` and `label = 1` (injected spoofed flight).
 * **The Collision**:
-  - When the backend generated the snapshot in [`scripts/aeroguard_server.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/aeroguard_server.py), and when the map rendered markers in [`frontend/src/components/AirspaceMap.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/AirspaceMap.jsx), the code checked:
+  - When the backend generated the snapshot in [`scripts/aeroguard_server.py`](../scripts/aeroguard_server.py), and when the map rendered markers in [`frontend/src/components/AirspaceMap.jsx`](../frontend/src/components/AirspaceMap.jsx), the code checked:
     ```javascript
     if (ac.isAnomaly) {
       // Render red threat tag containing:
@@ -45,7 +45,7 @@ This phenomenon was caused by a combination of **legitimate model cold-start phy
     ```
   - For normal aircraft misclassified by the model ($p \ge 0.20$, a statistical False Positive), `ac.anomalyType` held the raw ground-truth string `"normal"`.
   - Consequently, the UI rendered a **red anomaly warning box displaying the word "NORMAL"**!
-  - Similarly, in [`frontend/src/components/AlertsList.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/AlertsList.jsx), the alert badge displayed `NORMAL` and the message read `"ST-GNN detected normal (Score: 0.4061 >= 0.20)"`.
+  - Similarly, in [`frontend/src/components/AlertsList.jsx`](../frontend/src/components/AlertsList.jsx), the alert badge displayed `NORMAL` and the message read `"ST-GNN detected normal (Score: 0.4061 >= 0.20)"`.
 * **Verdict**: This was a **semantic field collision** where the offline ground-truth label was conflated with the real-time model decision. In an operational defense system, any flight exceeding threshold $t=0.20$ is a detected threat (`TRAJECTORY ANOMALY` / `ST-GNN ALERT`), never "NORMAL".
 
 ---
@@ -54,11 +54,11 @@ This phenomenon was caused by a combination of **legitimate model cold-start phy
 
 | Counter | Frontend Component & Store Hook | Backend Source & Calculation | Exact Operational Definition |
 | :--- | :--- | :--- | :--- |
-| **TOTAL TRACKED** | [`MetricCards.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/MetricCards.jsx) (`metrics.totalTracked`) | `len(aircraft_list)` in [`aeroguard_server.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/aeroguard_server.py) line 271 | **Instantaneous Active Aircraft Count**: The number of distinct aircraft tracks with valid telemetry observations in the current 1-second snapshot. (At $t=0$, exactly 9 flights). |
-| **ACTIVE ANOMALIES** | [`MetricCards.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/MetricCards.jsx) (`metrics.activeAnomalies`) | `sum(1 for a in aircraft if a.st_gnn_prob >= 0.20)` in [`aeroguard_server.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/aeroguard_server.py) line 209 | **Current Anomaly Classifications**: The count of active aircraft in this snapshot whose ST-GNN fusion probability equals or exceeds the calibrated threshold ($p \ge 0.20$). |
-| **MODEL CONFIDENCE** | [`MetricCards.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/MetricCards.jsx) (`metrics.modelConfidence`) | `(1.0 - mean_anomaly_prob) * 100` in [`useAeroStore.js`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/store/useAeroStore.js) line 135 | **Airspace Nominal Baseline**: Statistical complement of the mean airspace threat probability across all active nodes in the current graph snapshot. |
-| **GRAPH NODES & ANOMALIES** | [`GNNPanel.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/GNNPanel.jsx) lines 301–306 | `N = nodes.length`, `Δ = nodes.filter(n => n.isAnomaly).length` | **Relational Graph Snapshot Counts**: Number of vertices ($N$) in the dynamic $100\text{ km}$ relational airspace graph and the subset ($\Delta$) currently exceeding the anomaly threshold. |
-| **FLIGHT ALERTS COUNT** | [`AlertsList.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/AlertsList.jsx) & [`TopBar.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/TopBar.jsx) | `len(alerts)` from `GET /api/alerts` ([`aeroguard_server.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/aeroguard_server.py) line 356) | **Active Alert Registry**: Count of active notifications generated for the current observation second where ST-GNN score crossed $0.20$. |
+| **TOTAL TRACKED** | [`MetricCards.jsx`](../frontend/src/components/MetricCards.jsx) (`metrics.totalTracked`) | `len(aircraft_list)` in [`aeroguard_server.py`](../scripts/aeroguard_server.py) line 271 | **Instantaneous Active Aircraft Count**: The number of distinct aircraft tracks with valid telemetry observations in the current 1-second snapshot. (At $t=0$, exactly 9 flights). |
+| **ACTIVE ANOMALIES** | [`MetricCards.jsx`](../frontend/src/components/MetricCards.jsx) (`metrics.activeAnomalies`) | `sum(1 for a in aircraft if a.st_gnn_prob >= 0.20)` in [`aeroguard_server.py`](../scripts/aeroguard_server.py) line 209 | **Current Anomaly Classifications**: The count of active aircraft in this snapshot whose ST-GNN fusion probability equals or exceeds the calibrated threshold ($p \ge 0.20$). |
+| **MODEL CONFIDENCE** | [`MetricCards.jsx`](../frontend/src/components/MetricCards.jsx) (`metrics.modelConfidence`) | `(1.0 - mean_anomaly_prob) * 100` in [`useAeroStore.js`](../frontend/src/store/useAeroStore.js) line 135 | **Airspace Nominal Baseline**: Statistical complement of the mean airspace threat probability across all active nodes in the current graph snapshot. |
+| **GRAPH NODES & ANOMALIES** | [`GNNPanel.jsx`](../frontend/src/components/GNNPanel.jsx) lines 301–306 | `N = nodes.length`, `Δ = nodes.filter(n => n.isAnomaly).length` | **Relational Graph Snapshot Counts**: Number of vertices ($N$) in the dynamic $100\text{ km}$ relational airspace graph and the subset ($\Delta$) currently exceeding the anomaly threshold. |
+| **FLIGHT ALERTS COUNT** | [`AlertsList.jsx`](../frontend/src/components/AlertsList.jsx) & [`TopBar.jsx`](../frontend/src/components/TopBar.jsx) | `len(alerts)` from `GET /api/alerts` ([`aeroguard_server.py`](../scripts/aeroguard_server.py) line 356) | **Active Alert Registry**: Count of active notifications generated for the current observation second where ST-GNN score crossed $0.20$. |
 
 ---
 
@@ -83,12 +83,12 @@ The following table compares the ground truth, backend model outputs, map displa
 ## 4. Secondary Subsystem Integrity Checks
 
 ### 4.1 XAI Explanation Timestamp Fidelity
-* **Issue Discovered**: In [`scripts/aeroguard_server.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/aeroguard_server.py) lines 452–456, `handle_xai_explain()` checked:
+* **Issue Discovered**: In [`scripts/aeroguard_server.py`](../scripts/aeroguard_server.py) lines 452–456, `handle_xai_explain()` checked:
   ```python
   if icao24 in state.explanation_cache:
       return web.json_response(state.explanation_cache[icao24])
   ```
-  Because pre-audited case studies were seeded on startup from [`docs/xai_audit_cases.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/xai_audit_cases.json) (which included `500006` at timestamp `10:48:39`), any query for `500006` at timestamp `10:00:00` bypassed observation computation and returned the seeded case from `10:48:39` ($p = 0.999$, altitude disparity).
+  Because pre-audited case studies were seeded on startup from [`docs/xai_audit_cases.json`](./xai_audit_cases.json) (which included `500006` at timestamp `10:48:39`), any query for `500006` at timestamp `10:00:00` bypassed observation computation and returned the seeded case from `10:48:39` ($p = 0.999$, altitude disparity).
 * **Fix Implemented**: The lookup now strictly matches the exact composite key `(icao24, timestamp)`. If the exact timestamp is not cached, the explainer computes the dossier for the requested observation; generic `icao24` caching is reserved strictly as a last resort when the requested timestamp does not exist in the dataset.
 
 ### 4.2 Transponder Clones & React Key Uniqueness
@@ -104,18 +104,18 @@ The following table compares the ground truth, backend model outputs, map displa
 
 All changes are safe, non-destructive, and strictly frontend/formatting adjustments that preserve all model weights, scalers, predictions, and evaluation metrics:
 
-1. **[`scripts/aeroguard_server.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/aeroguard_server.py)**:
+1. **[`scripts/aeroguard_server.py`](../scripts/aeroguard_server.py)**:
    - Line 222: Set unique observation ID `f"{row['icao24']}_{idx}"` to avoid transponder collision key clobbering.
    - Lines 356–373: Ensured alerts format `a_type = "trajectory_anomaly"` when `is_anomaly` is true on normal ground truth, avoiding contradictory `"ST-GNN detected normal"` messages.
    - Lines 452–465: Fixed `handle_xai_explain` and `_compute_explanation_sync` to prioritize exact observation timestamps over stale seeded dossiers.
 
-2. **[`frontend/src/components/AirspaceMap.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/AirspaceMap.jsx)**:
+2. **[`frontend/src/components/AirspaceMap.jsx`](../frontend/src/components/AirspaceMap.jsx)**:
    - Lines 93–97: Ensured that if `isAnomaly` is true and `anomalyType` is missing or `"normal"`, the UI displays `'TRAJECTORY ANOMALY'`, preventing red warning boxes labeled `"NORMAL"`.
 
-3. **[`frontend/src/components/AlertsList.jsx`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/components/AlertsList.jsx)**:
+3. **[`frontend/src/components/AlertsList.jsx`](../frontend/src/components/AlertsList.jsx)**:
    - Line 93: Guarded alert category badge against displaying `"NORMAL"` for active anomaly alerts.
 
-4. **[`frontend/src/store/useAeroStore.js`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/src/store/useAeroStore.js)**:
+4. **[`frontend/src/store/useAeroStore.js`](../frontend/src/store/useAeroStore.js)**:
    - Lines 323–330: Prevented client-side cache from returning stale generic `icao24` dossiers when `currentTimestamp` is specified.
 
 ---
@@ -123,7 +123,7 @@ All changes are safe, non-destructive, and strictly frontend/formatting adjustme
 ## 6. Verification & Regression Testing
 
 ### 6.1 Automated Regression Test Suite
-A dedicated test suite was implemented in [`tests/test_dashboard_consistency.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/tests/test_dashboard_consistency.py):
+A dedicated test suite was implemented in [`tests/test_dashboard_consistency.py`](../tests/test_dashboard_consistency.py):
 1. `test_initial_snapshot_arithmetic`: Verifies 9 tracked and 9 anomalies at $t=0$, confirming all 9 exceed $0.20$.
 2. `test_anomaly_label_semantic_consistency`: Verifies zero aircraft markers display `"normal"` when `isAnomaly = True`.
 3. `test_alerts_semantic_consistency`: Verifies all 9 alerts emit valid warning classifications without claiming `"detected normal"`, and have distinct IDs.

@@ -198,7 +198,7 @@ def write_xai_markdown_report(report_path: str, explanations: dict, plot_path: s
 **Document**: `docs/xai_explanation_report.md`
 **Date**: October 2026
 **Component**: Phase 4 Explainability & Model Attribution Engine
-**Visual Artifact**: [`{plot_path}`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/{plot_path})
+**Visual Artifact**: [`{plot_path}`](../{plot_path})
 
 ---
 
@@ -213,7 +213,7 @@ This report delivers the **Explainable AI (XAI) architecture** for AeroGuard AI.
 
 ## 2. Multi-Stream Attribution Visualizations
 
-![AeroGuard XAI Attribution Profiles](file:///d:/SEM_3/SDC/project%20code/AeroGuard/{plot_path})
+![AeroGuard XAI Attribution Profiles](../{plot_path})
 
 ---
 

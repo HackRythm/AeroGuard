@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Audit Overview
 
-This document presents the **audited experimental results** for the AeroGuard AI research evaluation package. All metrics were computed using the standalone benchmark evaluation script ([`research/evaluate_benchmarks.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/research/evaluate_benchmarks.py)), the multi-stream ablation harness ([`research/ablation_protocol.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/research/ablation_protocol.py)), and the scientific XAI attribution audit ([`research/audit_xai_scientific.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/research/audit_xai_scientific.py)).
+This document presents the **audited experimental results** for the AeroGuard AI research evaluation package. All metrics were computed using the standalone benchmark evaluation script ([`research/evaluate_benchmarks.py`](../research/evaluate_benchmarks.py)), the multi-stream ablation harness ([`research/ablation_protocol.py`](../research/ablation_protocol.py)), and the scientific XAI attribution audit ([`research/audit_xai_scientific.py`](../research/audit_xai_scientific.py)).
 
 All models were evaluated strictly on the **identical $32,550$ out-of-distribution test observations** under geographic domain shift ($\approx 1,500\text{ km}$ spatial separation from training traffic).
 
@@ -39,19 +39,19 @@ The table below benchmarks the proposed **Tri-Stream ST-GNN** against tabular an
 A thorough audit of project documentation identified two historical discrepancies that must be explicitly resolved in scholarly submissions:
 
 ### Discrepancy 1: Preliminary Documentation (`README.md`) vs. Verified Test Set Results
-* **The Discrepancy**: In [`README.md`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/README.md) lines 89–93, the ST-GNN was listed with:
+* **The Discrepancy**: In [`README.md`](../README.md) lines 89–93, the ST-GNN was listed with:
   $$\text{Precision} = 0.4590, \quad \text{Recall} = 0.5732, \quad \text{F1} = 0.5097, \quad \text{ROC-AUC} = 0.9023$$
 * **Reconciliation Finding**:
   - The metrics listed in `README.md` were recorded from an early synthetic validation trial where ghost aircraft trajectories were simulated with high kinematic noise rather than smooth cruising profiles.
-  - The **actual, independently audited ground truth** derived directly from the official model checkpoint ([`models/st_gnn_official.pt`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_official.pt)), calibrated threshold JSON ([`models/st_gnn_calibrated_threshold.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/st_gnn_calibrated_threshold.json)), and predictions ([`data/st_gnn_test_predictions.csv`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/st_gnn_test_predictions.csv)) on the full $32,550$ out-of-distribution test set is:
+  - The **actual, independently audited ground truth** derived directly from the official model checkpoint ([`models/st_gnn_official.pt`](../models/st_gnn_official.pt)), calibrated threshold JSON ([`models/st_gnn_calibrated_threshold.json`](../models/st_gnn_calibrated_threshold.json)), and predictions ([`data/st_gnn_test_predictions.csv`](../data/st_gnn_test_predictions.csv)) on the full $32,550$ out-of-distribution test set is:
     $$\text{Precision} = \mathbf{0.7306}, \quad \text{Recall} = \mathbf{0.1804}, \quad \text{F1} = \mathbf{0.2893}, \quad \text{ROC-AUC} = \mathbf{0.6235}, \quad \text{PR-AUC} = \mathbf{0.3720}$$
   - For academic honesty and peer-review integrity, only the verified audited metrics are reported.
 
 ### Discrepancy 2: Historical Edge-Aware GNN Apparent Failure
 * **The Discrepancy**: In the Week 1 report, the Edge-Aware GNN appeared to collapse to ROC-AUC $0.4578$.
 * **Reconciliation Finding**:
-  - As proven in [`docs/edge_aware_gnn_audit.md`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/edge_aware_gnn_audit.md), this collapse was caused by an evaluation row-ordering misalignment (`df.groupby('timestamp')` vs `icao24`-sorted labels) and an edge attribute double-scaling defect that divided normalized deltas by $4,364\text{ ft}$.
-  - When properly aligned and scaled in [`scripts/train_edge_aware_repaired.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/train_edge_aware_repaired.py), the spatial encoder achieves **ROC-AUC $0.7635$** and **PR-AUC $0.4347$**.
+  - As proven in [`docs/edge_aware_gnn_audit.md`](./edge_aware_gnn_audit.md), this collapse was caused by an evaluation row-ordering misalignment (`df.groupby('timestamp')` vs `icao24`-sorted labels) and an edge attribute double-scaling defect that divided normalized deltas by $4,364\text{ ft}$.
+  - When properly aligned and scaled in [`scripts/train_edge_aware_repaired.py`](../scripts/train_edge_aware_repaired.py), the spatial encoder achieves **ROC-AUC $0.7635$** and **PR-AUC $0.4347$**.
 
 ### Discrepancy 3: Historical Baseline Row-Ordering Misalignment
 * **The Discrepancy**: In preliminary benchmark tables, Random Forest was listed with $\text{Precision}=0.5742, \text{Recall}=0.0757, F_1=0.1338, \text{ROC-AUC}=0.5528$.
@@ -59,7 +59,7 @@ A thorough audit of project documentation identified two historical discrepancie
   - In `data/aero_guard_test_predictions.csv`, baseline predictions were saved sorted chronologically by timestamp across all aircraft, whereas `data/st_gnn_test_predictions.csv` was sorted by flight (`icao24`).
   - Evaluating baseline predictions without observation alignment evaluated predictions against index-mismatched observation labels.
   - When deterministically aligned on the composite primary key `(timestamp, icao24, latitude, longitude, altitude)`, Random Forest's genuine performance is revealed: $\text{Precision}=\mathbf{1.0000}, \text{Recall}=\mathbf{0.1318}, F_1=\mathbf{0.2330}, \text{ROC-AUC}=\mathbf{0.8047}$.
-  - This matches the original Week 1 confusion matrix exactly ($\text{TN}=27,544, \text{FP}=0, \text{FN}=4,346, \text{TP}=660$). Random Forest detects $100\%$ of altitude overrides ($660/660$), but $0\%$ of ghost flights, position jumps, or transponder collisions. The historical unaligned numbers are preserved in [`research/metrics/historical_unaligned_benchmarks.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/research/metrics/historical_unaligned_benchmarks.json) as an audit trail.
+  - This matches the original Week 1 confusion matrix exactly ($\text{TN}=27,544, \text{FP}=0, \text{FN}=4,346, \text{TP}=660$). Random Forest detects $100\%$ of altitude overrides ($660/660$), but $0\%$ of ghost flights, position jumps, or transponder collisions. The historical unaligned numbers are preserved in [`research/metrics/historical_unaligned_benchmarks.json`](../research/metrics/historical_unaligned_benchmarks.json) as an audit trail.
 
 ---
 
@@ -165,7 +165,7 @@ To maintain academic rigor, the following system boundaries are explicitly docum
    - Physical RTL-SDR USB dongles are unattached during testing; the system operates in **Software-Defined Simulation Mode** processing complex baseband IQ samples and synthetic Mode-S packets.
 2. **Missing Compact Position Reporting (CPR) Decoding**:
    - In civil ADS-B (DO-260B), Type Codes 9–18 transmit latitude and longitude encoded in 17-bit Compact Position Reporting (CPR) formats (alternating odd and even frames).
-   - The current SDR waveform decoder ([`scripts/rtl_sdr_adapter.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/rtl_sdr_adapter.py)) decodes Type Codes 1–4 (Identification) and Type Code 19 (Airborne Velocity); CPR position reconstruction is bypassed, with positions ingested from simulated telemetry.
+   - The current SDR waveform decoder ([`scripts/rtl_sdr_adapter.py`](../scripts/rtl_sdr_adapter.py)) decodes Type Codes 1–4 (Identification) and Type Code 19 (Airborne Velocity); CPR position reconstruction is bypassed, with positions ingested from simulated telemetry.
 3. **Velocity Decoding Subtype Limitation**:
    - The airborne velocity decoder handles Subtypes 1 & 2 (groundspeed, heading, and vertical rate). Subtypes 3 & 4 (true airspeed / indicated airspeed) and supersonic velocity bits are unhandled.
 4. **Absence of Physical-Layer Multilateration (TDoA / AoA)**:

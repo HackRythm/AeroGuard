@@ -132,25 +132,25 @@ AeroGuard AI incorporates an operational Explainable AI engine (`scripts/aerogua
 
 ## File Directory Reference
 
-- [`data/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/data/):
+- [`data/`](./data/):
   - `aero_guard_train.csv` / `aero_guard_test.csv` — Standardized training and OOD test sets.
   - `st_gnn_test_predictions.csv` — Full OOD prediction evaluation results with stream probabilities.
-- [`docs/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/):
+- [`docs/`](./docs/):
   - `sdc_semester_demonstration_guide.md` — Semester 3 final demonstration guide and SDC curriculum alignment.
   - `xai_explanation_report.md` — Detailed technical report on Multi-Stream XAI and representative case studies.
   - `xai_audit_cases.json` — 8 audited operational dossiers (True Positives, True Negatives, False Positives, False Negatives, Borderline).
   - `st_gnn_implementation_report.md` — Comprehensive architecture and training report for Tri-Stream ST-GNN.
-- [`models/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/):
+- [`models/`](./models/):
   - `st_gnn_official.pt` — Official trained Multi-Stream ST-GNN checkpoint.
   - `gnn_edge_aware_repaired.pt` — Repaired Edge-Aware GNN spatial encoder weights.
   - `st_gnn_calibrated_threshold.json` — Calibrated decision threshold ($t = 0.20$).
   - `scaler_node_repaired.joblib`, `scaler_edge_repaired.joblib`, `scaler_kinematic.joblib` — Feature normalizers.
-- [`scripts/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/):
+- [`scripts/`](./scripts/):
   - `rtl_sdr_adapter.py` — Software-Defined Radio receiver, baseband modulator, and Mode-S decoder.
   - `live_st_gnn_inference.py` — Active track buffer, discrete kinematic derivatives, and live inference engine.
   - `aeroguard_explainer.py` — Multi-Stream Explainable AI (XAI) engine.
   - `aeroguard_server.py` — Asynchronous Command Center backend API service (port 8000).
-- [`tests/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/tests/):
+- [`tests/`](./tests/):
   - `test_evaluate_benchmarks.py` — 14 tests covering baseline observation alignment, shuffled row immunity, and error handling.
   - `test_ablation_protocol.py` — 11 tests validating dynamic multi-stream ablation and isolated stream metrics.
   - `test_server.py` — 11 tests validating async REST API endpoints.
@@ -161,14 +161,14 @@ AeroGuard AI incorporates an operational Explainable AI engine (`scripts/aerogua
   - `test_st_gnn.py` — 4 unit tests for ST-GNN forward pass and masking.
   - `test_runtime_e2e_validation.py` — 4 tests validating live simulation bursts and decision outcomes.
   - `test_end_to_end_sdr_st_gnn.py` — 1 end-to-end integration test (IQ $\to$ ST-GNN $\to$ XAI).
-- [`frontend/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/):
+- [`frontend/`](./frontend/):
   - Modern React/Vite/Tailwind Command Center dashboard with live radar, graph edges, and 4-tab XAI panel.
 
 ---
 
 ## Quick Start & Verification
 
-For comprehensive reproduction, dataset generation, and multi-model benchmarking instructions, see [docs/reproducible_setup.md](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/reproducible_setup.md).
+For comprehensive reproduction, dataset generation, and multi-model benchmarking instructions, see [docs/reproducible_setup.md](./docs/reproducible_setup.md).
 
 ### 1. Installation
 

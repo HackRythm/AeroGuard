@@ -52,14 +52,14 @@ Raw Telemetry Observation ──► [Leakage Audit Filter] ──► [Coordinate
 ```
 
 1. **Zero Internal Ground-Truth Leakage**:
-   - The dataset generation script ([`scripts/generate_aeroguard_dataset.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/generate_aeroguard_dataset.py)) uses internal columns (`true_latitude`, `true_longitude`, `true_altitude`, `true_groundspeed`, `true_heading`, `true_vertical_rate`) during RF Doppler/RSS simulation.
+   - The dataset generation script ([`scripts/generate_aeroguard_dataset.py`](../scripts/generate_aeroguard_dataset.py)) uses internal columns (`true_latitude`, `true_longitude`, `true_altitude`, `true_groundspeed`, `true_heading`, `true_vertical_rate`) during RF Doppler/RSS simulation.
    - All `true_*` columns are strictly stripped prior to dataset serialization.
-   - The leakage audit in [`scripts/train_st_gnn.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/train_st_gnn.py) asserts $\text{count}(\text{true\_*}) = 0$.
+   - The leakage audit in [`scripts/train_st_gnn.py`](../scripts/train_st_gnn.py) asserts $\text{count}(\text{true\_*}) = 0$.
 2. **Zero Temporal Peeking (Causal Consistency)**:
    - Numerical kinematic residuals ($\text{disp\_ratio}$, $\text{alt\_residual}$, $\text{accel\_residual}$, $\text{turn\_residual}$) and sliding history sequences ($T=5$) use backward lags only ($\tau \le t$).
    - Future observations ($\tau > t$) are inaccessible to both training and test passes.
 3. **Strict Split Isolation**:
-   - `StandardScaler` instances ([`models/scaler_node_repaired.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_node_repaired.joblib), [`models/scaler_edge_repaired.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_edge_repaired.joblib), [`models/scaler_kinematic.joblib`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/models/scaler_kinematic.joblib)) were fitted strictly on the $80\%$ training split of Jan 1.
+   - `StandardScaler` instances ([`models/scaler_node_repaired.joblib`](../models/scaler_node_repaired.joblib), [`models/scaler_edge_repaired.joblib`](../models/scaler_edge_repaired.joblib), [`models/scaler_kinematic.joblib`](../models/scaler_kinematic.joblib)) were fitted strictly on the $80\%$ training split of Jan 1.
    - The operational decision threshold ($t^* = 0.20$) was calibrated strictly on the $20\%$ validation split of Jan 1 by maximizing validation F1-score.
 4. **Coordinate-Free Node Representation**:
    - To prevent spatial over-fitting to specific geographic runways or corridors, absolute `latitude` and `longitude` are omitted from the GNN node feature vector.
