@@ -1,0 +1,22 @@
+{
+    "timestamp": "2026-10-13T23:55:03.756406",
+    "selected_fusion": "Fusion: Weighted Probability",
+    "calibrated_threshold": 0.2,
+    "validation_f1": 0.5271091660588378,
+    "test_metrics": {
+        "default_05": {
+            "precision": 0.882494004796163,
+            "recall": 0.14702357171394326,
+            "f1": 0.25205479452054796,
+            "roc_auc": 0.6234702027331942,
+            "pr_auc": 0.37204728808644766
+        },
+        "calibrated": {
+            "precision": 0.7305825242718447,
+            "recall": 0.18038353975229723,
+            "f1": 0.2893303428388337,
+            "roc_auc": 0.6234702027331942,
+            "pr_auc": 0.37204728808644766
+        }
+    }
+}

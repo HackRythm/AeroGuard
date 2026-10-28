@@ -13,6 +13,8 @@ function formatTimestamp(iso) {
 export default function AlertsList() {
   const alerts = useAeroStore((s) => s.alerts);
   const dismissAlert = useAeroStore((s) => s.dismissAlert);
+  const selectAircraft = useAeroStore((s) => s.selectAircraft);
+  const selectedAircraft = useAeroStore((s) => s.selectedAircraft);
 
   const visible = alerts.filter((a) => !a.dismissed).slice(0, 8);
 
@@ -46,12 +48,17 @@ export default function AlertsList() {
       <div className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto pr-1">
         {visible.map((alert) => {
           const isCritical = alert.severity === 'critical';
+          const targetId = alert.aircraftId || alert.icao24;
+          const isSelected = selectedAircraft === targetId;
 
           return (
             <div
               key={alert.id}
-              className={`p-2.5 rounded border flex items-start gap-2 transition-all duration-150 group ${
-                isCritical
+              onClick={() => selectAircraft(targetId)}
+              className={`p-2.5 rounded border flex items-start gap-2 transition-all duration-150 group cursor-pointer ${
+                isSelected
+                  ? 'border-primary bg-primary/10 shadow-sm'
+                  : isCritical
                   ? 'bg-error-container/10 border-error/30 hover:border-error/60'
                   : 'bg-warning/5 border-warning/20 hover:border-warning/50'
               }`}
@@ -83,7 +90,7 @@ export default function AlertsList() {
                         : 'bg-warning/20 text-warning'
                     }`}
                   >
-                    {alert.anomalyType.replace('_', ' ')}
+                    {(String(alert.anomalyType).toLowerCase() === 'normal' ? 'trajectory anomaly' : alert.anomalyType).replace('_', ' ')}
                   </span>
                 </div>
                 <p className="text-mono-data text-on-surface-variant truncate text-[11px]">
@@ -93,7 +100,10 @@ export default function AlertsList() {
 
               {/* Dismiss */}
               <button
-                onClick={() => dismissAlert(alert.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dismissAlert(alert.id);
+                }}
                 className="p-1 text-on-surface-variant hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
                 aria-label="Dismiss alert"
               >

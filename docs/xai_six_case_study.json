@@ -1,0 +1,1049 @@
+{
+  "1. Detected Altitude Anomaly": {
+    "timestamp": "2020-01-02 10:54:09",
+    "icao24": "500006",
+    "callsign": "RYR205",
+    "anomaly_probability": 0.75298667,
+    "threat_level": "CRITICAL",
+    "primary_root_cause": "Vertical Relational Disparity",
+    "spatial_explanation": {
+      "target_node_idx": 5,
+      "top_node_features": [
+        {
+          "feature": "altitude",
+          "importance": 0.16775020956993103
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.15274804830551147
+        },
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.07348345965147018
+        },
+        {
+          "feature": "vertical_rate",
+          "importance": 0.07225824147462845
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.07149295508861542
+        }
+      ],
+      "all_node_features": [
+        {
+          "feature": "altitude",
+          "importance": 0.16775020956993103
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.15274804830551147
+        },
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.07348345965147018
+        },
+        {
+          "feature": "vertical_rate",
+          "importance": 0.07225824147462845
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.07149295508861542
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.07006178051233292
+        },
+        {
+          "feature": "climb_rate_change",
+          "importance": 0.06837733089923859
+        },
+        {
+          "feature": "heading_sin",
+          "importance": 0.0679330825805664
+        },
+        {
+          "feature": "turn_rate",
+          "importance": 0.06759873032569885
+        },
+        {
+          "feature": "vertical_acceleration",
+          "importance": 0.0664878785610199
+        },
+        {
+          "feature": "acceleration",
+          "importance": 0.06310765445232391
+        },
+        {
+          "feature": "estimated_doppler_hz",
+          "importance": 0.058700576424598694
+        }
+      ],
+      "critical_edges": []
+    },
+    "temporal_explanation": {
+      "peak_timestep": "t",
+      "temporal_step_importance": [
+        {
+          "timestep": "t-4",
+          "importance": 0.15038897097110748
+        },
+        {
+          "timestep": "t-3",
+          "importance": 0.11955919116735458
+        },
+        {
+          "timestep": "t-2",
+          "importance": 0.1395491659641266
+        },
+        {
+          "timestep": "t-1",
+          "importance": 0.21466265618801117
+        },
+        {
+          "timestep": "t",
+          "importance": 0.3758399784564972
+        }
+      ],
+      "top_temporal_features": [
+        {
+          "feature": "spatial_emb_0",
+          "importance": 0.13626527786254883
+        },
+        {
+          "feature": "spatial_emb_1",
+          "importance": 0.13397833704948425
+        },
+        {
+          "feature": "spatial_emb_2",
+          "importance": 0.13151833415031433
+        },
+        {
+          "feature": "altitude",
+          "importance": 0.11719024926424026
+        },
+        {
+          "feature": "spatial_emb_9",
+          "importance": 0.09078685939311981
+        }
+      ]
+    },
+    "kinematic_explanation": {
+      "top_kinematic_residuals": [
+        {
+          "residual_feature": "turn_residual",
+          "importance": 0.6411507725715637,
+          "raw_value": 1.4275906845551134e-14
+        },
+        {
+          "residual_feature": "vertical_rate",
+          "importance": 0.11984173208475113,
+          "raw_value": 146.43834432414707
+        },
+        {
+          "residual_feature": "track_jump_flag",
+          "importance": 0.0815640538930893,
+          "raw_value": 0.0
+        },
+        {
+          "residual_feature": "icao_collision",
+          "importance": 0.06532882899045944,
+          "raw_value": 0.0
+        },
+        {
+          "residual_feature": "disp_ratio",
+          "importance": 0.02651451714336872,
+          "raw_value": 1.001763338763735
+        }
+      ],
+      "diagnostic_flags": []
+    }
+  },
+  "2. Detected Identity Inconsistency": {
+    "timestamp": "2020-01-02 10:30:00",
+    "icao24": "500002",
+    "callsign": "RYR201",
+    "anomaly_probability": 0.23264194,
+    "threat_level": "ELEVATED",
+    "primary_root_cause": "CRITICAL Violation",
+    "spatial_explanation": {
+      "target_node_idx": 2,
+      "top_node_features": [
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.15893912315368652
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.15335313975811005
+        },
+        {
+          "feature": "heading_sin",
+          "importance": 0.143341526389122
+        },
+        {
+          "feature": "vertical_rate",
+          "importance": 0.08798594027757645
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.06379668414592743
+        }
+      ],
+      "all_node_features": [
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.15893912315368652
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.15335313975811005
+        },
+        {
+          "feature": "heading_sin",
+          "importance": 0.143341526389122
+        },
+        {
+          "feature": "vertical_rate",
+          "importance": 0.08798594027757645
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.06379668414592743
+        },
+        {
+          "feature": "acceleration",
+          "importance": 0.0603274367749691
+        },
+        {
+          "feature": "vertical_acceleration",
+          "importance": 0.056828323751688004
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.056683674454689026
+        },
+        {
+          "feature": "estimated_doppler_hz",
+          "importance": 0.05595991015434265
+        },
+        {
+          "feature": "turn_rate",
+          "importance": 0.055115438997745514
+        },
+        {
+          "feature": "altitude",
+          "importance": 0.05435940995812416
+        },
+        {
+          "feature": "climb_rate_change",
+          "importance": 0.05330940708518028
+        }
+      ],
+      "critical_edges": [
+        {
+          "neighbor_node_idx": 1,
+          "edge_importance": 0.7528879642486572,
+          "distance_scaled": -2.193753719329834,
+          "alt_diff_scaled": -2.3757179335581834e-18,
+          "vel_diff_scaled": 1.4862705766121906e-18,
+          "head_diff_scaled": 1.5636070008022233e-18
+        }
+      ]
+    },
+    "temporal_explanation": {
+      "peak_timestep": "t",
+      "temporal_step_importance": [
+        {
+          "timestep": "t-4",
+          "importance": 0.21829083561897278
+        },
+        {
+          "timestep": "t-3",
+          "importance": 0.16443422436714172
+        },
+        {
+          "timestep": "t-2",
+          "importance": 0.15228824317455292
+        },
+        {
+          "timestep": "t-1",
+          "importance": 0.1834009885787964
+        },
+        {
+          "timestep": "t",
+          "importance": 0.2815857529640198
+        }
+      ],
+      "top_temporal_features": [
+        {
+          "feature": "spatial_emb_7",
+          "importance": 0.338040828704834
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.1461804360151291
+        },
+        {
+          "feature": "spatial_emb_6",
+          "importance": 0.10828614234924316
+        },
+        {
+          "feature": "spatial_emb_14",
+          "importance": 0.08361291140317917
+        },
+        {
+          "feature": "heading_sin",
+          "importance": 0.06985371559858322
+        }
+      ]
+    },
+    "kinematic_explanation": {
+      "top_kinematic_residuals": [
+        {
+          "residual_feature": "disp_ratio",
+          "importance": 0.4760320484638214,
+          "raw_value": 50.0
+        },
+        {
+          "residual_feature": "icao_collision",
+          "importance": 0.342696875333786,
+          "raw_value": 1.0
+        },
+        {
+          "residual_feature": "track_jump_flag",
+          "importance": 0.10979118943214417,
+          "raw_value": 1.0
+        },
+        {
+          "residual_feature": "turn_residual",
+          "importance": 0.05356120318174362,
+          "raw_value": 0.0
+        },
+        {
+          "residual_feature": "vertical_rate",
+          "importance": 0.013764999806880951,
+          "raw_value": 90.65908294991482
+        }
+      ],
+      "diagnostic_flags": [
+        "CRITICAL: Simultaneous ICAO transponder address collision detected (cloned identity).",
+        "CRITICAL: Non-physical displacement speed ratio (50.0x cruising speed).",
+        "CRITICAL: Position jump displacement > 5 km within 1 second."
+      ]
+    }
+  },
+  "3. Detected Ghost Aircraft": {
+    "timestamp": "2020-01-02 10:03:42",
+    "icao24": "e00002",
+    "callsign": "GHOST02",
+    "anomaly_probability": 0.8010938,
+    "threat_level": "CRITICAL",
+    "primary_root_cause": "Unknown / Multi-factor",
+    "spatial_explanation": {
+      "target_node_idx": 8,
+      "top_node_features": [
+        {
+          "feature": "heading_sin",
+          "importance": 0.1404252052307129
+        },
+        {
+          "feature": "altitude",
+          "importance": 0.13974720239639282
+        },
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.12988989055156708
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.12353464215993881
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.07276304811239243
+        }
+      ],
+      "all_node_features": [
+        {
+          "feature": "heading_sin",
+          "importance": 0.1404252052307129
+        },
+        {
+          "feature": "altitude",
+          "importance": 0.13974720239639282
+        },
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.12988989055156708
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.12353464215993881
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.07276304811239243
+        },
+        {
+          "feature": "vertical_rate",
+          "importance": 0.06525150686502457
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.062067434191703796
+        },
+        {
+          "feature": "estimated_doppler_hz",
+          "importance": 0.05977293848991394
+        },
+        {
+          "feature": "turn_rate",
+          "importance": 0.05598500370979309
+        },
+        {
+          "feature": "acceleration",
+          "importance": 0.051334086805582047
+        },
+        {
+          "feature": "climb_rate_change",
+          "importance": 0.04996886104345322
+        },
+        {
+          "feature": "vertical_acceleration",
+          "importance": 0.04926012456417084
+        }
+      ],
+      "critical_edges": [
+        {
+          "neighbor_node_idx": 5,
+          "edge_importance": 0.8882459402084351,
+          "distance_scaled": 1.6045997142791748,
+          "alt_diff_scaled": 0.8138852715492249,
+          "vel_diff_scaled": -1.0286593437194824,
+          "head_diff_scaled": -1.3309378623962402
+        },
+        {
+          "neighbor_node_idx": 6,
+          "edge_importance": 0.8384819030761719,
+          "distance_scaled": 1.4832807779312134,
+          "alt_diff_scaled": 1.4454210996627808,
+          "vel_diff_scaled": -1.648136019706726,
+          "head_diff_scaled": -2.5833911895751953
+        },
+        {
+          "neighbor_node_idx": 3,
+          "edge_importance": 0.8270471096038818,
+          "distance_scaled": 1.1131174564361572,
+          "alt_diff_scaled": 1.5735087394714355,
+          "vel_diff_scaled": -1.5581085681915283,
+          "head_diff_scaled": 2.475018262863159
+        },
+        {
+          "neighbor_node_idx": 4,
+          "edge_importance": 0.7099747061729431,
+          "distance_scaled": -2.193753719329834,
+          "alt_diff_scaled": -2.3757179335581834e-18,
+          "vel_diff_scaled": 1.4862705766121906e-18,
+          "head_diff_scaled": 1.5636070008022233e-18
+        },
+        {
+          "neighbor_node_idx": 2,
+          "edge_importance": 0.6928581595420837,
+          "distance_scaled": 0.03287321329116821,
+          "alt_diff_scaled": 0.7040159702301025,
+          "vel_diff_scaled": -0.06241442635655403,
+          "head_diff_scaled": 0.9888383150100708
+        }
+      ]
+    },
+    "temporal_explanation": {
+      "peak_timestep": "t",
+      "temporal_step_importance": [
+        {
+          "timestep": "t-4",
+          "importance": 0.11050811409950256
+        },
+        {
+          "timestep": "t-3",
+          "importance": 0.11303015053272247
+        },
+        {
+          "timestep": "t-2",
+          "importance": 0.13279272615909576
+        },
+        {
+          "timestep": "t-1",
+          "importance": 0.22712382674217224
+        },
+        {
+          "timestep": "t",
+          "importance": 0.41654518246650696
+        }
+      ],
+      "top_temporal_features": [
+        {
+          "feature": "spatial_emb_0",
+          "importance": 0.15587271749973297
+        },
+        {
+          "feature": "spatial_emb_8",
+          "importance": 0.10608486086130142
+        },
+        {
+          "feature": "spatial_emb_9",
+          "importance": 0.09252259880304337
+        },
+        {
+          "feature": "spatial_emb_2",
+          "importance": 0.0743400976061821
+        },
+        {
+          "feature": "spatial_emb_3",
+          "importance": 0.07147173583507538
+        }
+      ]
+    },
+    "kinematic_explanation": {
+      "top_kinematic_residuals": [
+        {
+          "residual_feature": "turn_residual",
+          "importance": 0.5708972811698914,
+          "raw_value": 2.8421709430404014e-14
+        },
+        {
+          "residual_feature": "vertical_rate",
+          "importance": 0.226078063249588,
+          "raw_value": -135.8186899667237
+        },
+        {
+          "residual_feature": "disp_ratio",
+          "importance": 0.13058657944202423,
+          "raw_value": 1.0014721675503158
+        },
+        {
+          "residual_feature": "track_jump_flag",
+          "importance": 0.021929897367954254,
+          "raw_value": 0.0
+        },
+        {
+          "residual_feature": "alt_residual",
+          "importance": 0.017627272754907608,
+          "raw_value": 2.9749536167855695e-12
+        }
+      ],
+      "diagnostic_flags": []
+    }
+  },
+  "4. Missed Ghost Aircraft": {
+    "timestamp": "2020-01-02 10:30:44",
+    "icao24": "e00002",
+    "callsign": "GHOST02",
+    "anomaly_probability": 0.005701288,
+    "threat_level": "NORMAL",
+    "primary_root_cause": "Vertical Relational Disparity",
+    "spatial_explanation": {
+      "target_node_idx": 9,
+      "top_node_features": [
+        {
+          "feature": "altitude",
+          "importance": 0.1479080766439438
+        },
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.14141100645065308
+        },
+        {
+          "feature": "heading_sin",
+          "importance": 0.13629060983657837
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.13432390987873077
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.060091782361269
+        }
+      ],
+      "all_node_features": [
+        {
+          "feature": "altitude",
+          "importance": 0.1479080766439438
+        },
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.14141100645065308
+        },
+        {
+          "feature": "heading_sin",
+          "importance": 0.13629060983657837
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.13432390987873077
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.060091782361269
+        },
+        {
+          "feature": "turn_rate",
+          "importance": 0.057982247322797775
+        },
+        {
+          "feature": "acceleration",
+          "importance": 0.05773065984249115
+        },
+        {
+          "feature": "vertical_acceleration",
+          "importance": 0.054569631814956665
+        },
+        {
+          "feature": "estimated_doppler_hz",
+          "importance": 0.05410756543278694
+        },
+        {
+          "feature": "climb_rate_change",
+          "importance": 0.05325278639793396
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.05291774496436119
+        },
+        {
+          "feature": "vertical_rate",
+          "importance": 0.04941391199827194
+        }
+      ],
+      "critical_edges": [
+        {
+          "neighbor_node_idx": 5,
+          "edge_importance": 0.754181981086731,
+          "distance_scaled": -2.193753719329834,
+          "alt_diff_scaled": -2.3757179335581834e-18,
+          "vel_diff_scaled": 1.4862705766121906e-18,
+          "head_diff_scaled": 1.5636070008022233e-18
+        }
+      ]
+    },
+    "temporal_explanation": {
+      "peak_timestep": "t",
+      "temporal_step_importance": [
+        {
+          "timestep": "t-4",
+          "importance": 0.05872486159205437
+        },
+        {
+          "timestep": "t-3",
+          "importance": 0.06261325627565384
+        },
+        {
+          "timestep": "t-2",
+          "importance": 0.07677535712718964
+        },
+        {
+          "timestep": "t-1",
+          "importance": 0.13663330674171448
+        },
+        {
+          "timestep": "t",
+          "importance": 0.665253221988678
+        }
+      ],
+      "top_temporal_features": [
+        {
+          "feature": "altitude",
+          "importance": 0.16793136298656464
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.11322370171546936
+        },
+        {
+          "feature": "spatial_emb_7",
+          "importance": 0.11186286062002182
+        },
+        {
+          "feature": "spatial_emb_6",
+          "importance": 0.10833960026502609
+        },
+        {
+          "feature": "spatial_emb_10",
+          "importance": 0.08532887697219849
+        }
+      ]
+    },
+    "kinematic_explanation": {
+      "top_kinematic_residuals": [
+        {
+          "residual_feature": "vertical_rate",
+          "importance": 0.6635870337486267,
+          "raw_value": -132.7426866163143
+        },
+        {
+          "residual_feature": "turn_residual",
+          "importance": 0.18693092465400696,
+          "raw_value": 4.163336342344337e-17
+        },
+        {
+          "residual_feature": "disp_ratio",
+          "importance": 0.05706435814499855,
+          "raw_value": 1.001510431564968
+        },
+        {
+          "residual_feature": "track_jump_flag",
+          "importance": 0.02700086310505867,
+          "raw_value": 0.0
+        },
+        {
+          "residual_feature": "accel_residual",
+          "importance": 0.021729402244091034,
+          "raw_value": 2.484124017598788e-15
+        }
+      ],
+      "diagnostic_flags": []
+    }
+  },
+  "5. Missed Position Jump": {
+    "timestamp": "2020-01-02 10:12:44",
+    "icao24": "500002",
+    "callsign": "RYR201",
+    "anomaly_probability": 0.18425898,
+    "threat_level": "NORMAL",
+    "primary_root_cause": "Unknown / Multi-factor",
+    "spatial_explanation": {
+      "target_node_idx": 1,
+      "top_node_features": [
+        {
+          "feature": "heading_sin",
+          "importance": 0.15808503329753876
+        },
+        {
+          "feature": "altitude",
+          "importance": 0.08964266628026962
+        },
+        {
+          "feature": "turn_rate",
+          "importance": 0.08564294874668121
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.08132028579711914
+        },
+        {
+          "feature": "acceleration",
+          "importance": 0.07947083562612534
+        }
+      ],
+      "all_node_features": [
+        {
+          "feature": "heading_sin",
+          "importance": 0.15808503329753876
+        },
+        {
+          "feature": "altitude",
+          "importance": 0.08964266628026962
+        },
+        {
+          "feature": "turn_rate",
+          "importance": 0.08564294874668121
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.08132028579711914
+        },
+        {
+          "feature": "acceleration",
+          "importance": 0.07947083562612534
+        },
+        {
+          "feature": "vertical_rate",
+          "importance": 0.07675716280937195
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.07453785091638565
+        },
+        {
+          "feature": "estimated_doppler_hz",
+          "importance": 0.07343891263008118
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.07170719653367996
+        },
+        {
+          "feature": "vertical_acceleration",
+          "importance": 0.0709778293967247
+        },
+        {
+          "feature": "climb_rate_change",
+          "importance": 0.07063867896795273
+        },
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.06778058409690857
+        }
+      ],
+      "critical_edges": [
+        {
+          "neighbor_node_idx": 7,
+          "edge_importance": 0.7067933082580566,
+          "distance_scaled": 0.5867424607276917,
+          "alt_diff_scaled": -1.1427104473114014,
+          "vel_diff_scaled": -1.6383225917816162,
+          "head_diff_scaled": 0.28415605425834656
+        }
+      ]
+    },
+    "temporal_explanation": {
+      "peak_timestep": "t-4",
+      "temporal_step_importance": [
+        {
+          "timestep": "t-4",
+          "importance": 0.24750061333179474
+        },
+        {
+          "timestep": "t-3",
+          "importance": 0.1920907199382782
+        },
+        {
+          "timestep": "t-2",
+          "importance": 0.155003160238266
+        },
+        {
+          "timestep": "t-1",
+          "importance": 0.1653333157300949
+        },
+        {
+          "timestep": "t",
+          "importance": 0.24007217586040497
+        }
+      ],
+      "top_temporal_features": [
+        {
+          "feature": "spatial_emb_7",
+          "importance": 0.3483952581882477
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.13308557868003845
+        },
+        {
+          "feature": "spatial_emb_10",
+          "importance": 0.09275337308645248
+        },
+        {
+          "feature": "spatial_emb_14",
+          "importance": 0.0914207175374031
+        },
+        {
+          "feature": "spatial_emb_5",
+          "importance": 0.08770845830440521
+        }
+      ]
+    },
+    "kinematic_explanation": {
+      "top_kinematic_residuals": [
+        {
+          "residual_feature": "turn_residual",
+          "importance": 0.6665315628051758,
+          "raw_value": 2.775557561562892e-17
+        },
+        {
+          "residual_feature": "vertical_rate",
+          "importance": 0.21701039373874664,
+          "raw_value": 30.614864161038675
+        },
+        {
+          "residual_feature": "disp_ratio",
+          "importance": 0.05398721992969513,
+          "raw_value": 1.0014238748513211
+        },
+        {
+          "residual_feature": "icao_collision",
+          "importance": 0.016808558255434036,
+          "raw_value": 0.0
+        },
+        {
+          "residual_feature": "track_jump_flag",
+          "importance": 0.01554151065647602,
+          "raw_value": 0.0
+        }
+      ],
+      "diagnostic_flags": []
+    }
+  },
+  "6. Normal False Positive": {
+    "timestamp": "2020-01-02 10:32:56",
+    "icao24": "500004",
+    "callsign": "RYR203",
+    "anomaly_probability": 0.23347029,
+    "threat_level": "ELEVATED",
+    "primary_root_cause": "Unknown / Multi-factor",
+    "spatial_explanation": {
+      "target_node_idx": 3,
+      "top_node_features": [
+        {
+          "feature": "heading_cos",
+          "importance": 0.09123118966817856
+        },
+        {
+          "feature": "vertical_rate",
+          "importance": 0.0898004099726677
+        },
+        {
+          "feature": "altitude",
+          "importance": 0.08940589427947998
+        },
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.08776393532752991
+        },
+        {
+          "feature": "vertical_acceleration",
+          "importance": 0.0834137499332428
+        }
+      ],
+      "all_node_features": [
+        {
+          "feature": "heading_cos",
+          "importance": 0.09123118966817856
+        },
+        {
+          "feature": "vertical_rate",
+          "importance": 0.0898004099726677
+        },
+        {
+          "feature": "altitude",
+          "importance": 0.08940589427947998
+        },
+        {
+          "feature": "estimated_rss_dbm",
+          "importance": 0.08776393532752991
+        },
+        {
+          "feature": "vertical_acceleration",
+          "importance": 0.0834137499332428
+        },
+        {
+          "feature": "estimated_snr_db",
+          "importance": 0.08324763923883438
+        },
+        {
+          "feature": "heading_sin",
+          "importance": 0.0819755494594574
+        },
+        {
+          "feature": "acceleration",
+          "importance": 0.08169588446617126
+        },
+        {
+          "feature": "turn_rate",
+          "importance": 0.08000177145004272
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.07876025885343552
+        },
+        {
+          "feature": "estimated_doppler_hz",
+          "importance": 0.0783810019493103
+        },
+        {
+          "feature": "climb_rate_change",
+          "importance": 0.07432276755571365
+        }
+      ],
+      "critical_edges": [
+        {
+          "neighbor_node_idx": 7,
+          "edge_importance": 0.7128692269325256,
+          "distance_scaled": 0.6623291373252869,
+          "alt_diff_scaled": -2.7935407161712646,
+          "vel_diff_scaled": -0.5878958702087402,
+          "head_diff_scaled": -0.03688612952828407
+        }
+      ]
+    },
+    "temporal_explanation": {
+      "peak_timestep": "t-4",
+      "temporal_step_importance": [
+        {
+          "timestep": "t-4",
+          "importance": 0.24575960636138916
+        },
+        {
+          "timestep": "t-3",
+          "importance": 0.20961900055408478
+        },
+        {
+          "timestep": "t-2",
+          "importance": 0.18250912427902222
+        },
+        {
+          "timestep": "t-1",
+          "importance": 0.1628018468618393
+        },
+        {
+          "timestep": "t",
+          "importance": 0.19931043684482574
+        }
+      ],
+      "top_temporal_features": [
+        {
+          "feature": "spatial_emb_7",
+          "importance": 0.40931880474090576
+        },
+        {
+          "feature": "heading_cos",
+          "importance": 0.13212497532367706
+        },
+        {
+          "feature": "spatial_emb_10",
+          "importance": 0.1228988990187645
+        },
+        {
+          "feature": "spatial_emb_14",
+          "importance": 0.06870917230844498
+        },
+        {
+          "feature": "groundspeed",
+          "importance": 0.061802998185157776
+        }
+      ]
+    },
+    "kinematic_explanation": {
+      "top_kinematic_residuals": [
+        {
+          "residual_feature": "turn_residual",
+          "importance": 0.8361958265304565,
+          "raw_value": 9.012235402394708e-14
+        },
+        {
+          "residual_feature": "vertical_rate",
+          "importance": 0.13815894722938538,
+          "raw_value": 91.40364966810596
+        },
+        {
+          "residual_feature": "disp_ratio",
+          "importance": 0.006802832707762718,
+          "raw_value": 1.0017560958942011
+        },
+        {
+          "residual_feature": "accel_residual",
+          "importance": 0.004544477444142103,
+          "raw_value": 3.9837924625807375e-15
+        },
+        {
+          "residual_feature": "track_jump_flag",
+          "importance": 0.0036189681850373745,
+          "raw_value": 0.0
+        }
+      ],
+      "diagnostic_flags": []
+    }
+  }
+}

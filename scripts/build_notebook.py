@@ -631,11 +631,11 @@ def create_notebook():
 
     # Create directories if not exist
     os.makedirs("../notebooks", exist_ok=True)
-    
+
     # Save notebook
     with open("../notebooks/01_aeroguard_eda.ipynb", "w") as f:
         json.dump(notebook, f, indent=2)
-        
+
     print("Notebook file notebooks/01_aeroguard_eda.ipynb successfully generated!")
 
 if __name__ == "__main__":

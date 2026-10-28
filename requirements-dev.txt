@@ -1,0 +1,11 @@
+# ==============================================================================
+# AeroGuard AI — Optional Development & Research Dependencies
+# ==============================================================================
+-r requirements.txt
+
+# Interactive Notebooks
+jupyter>=1.0.0
+ipykernel>=6.29.0
+
+# Optional Physical Hardware RTL-SDR Driver (Not required for software simulation)
+# pyrtlsdr>=0.3.0

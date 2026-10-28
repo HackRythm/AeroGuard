@@ -104,10 +104,11 @@ Each edge is assigned a 4-dimensional relative feature vector $\mathbf{e}_{ij}$ 
 We compared two machine learning approaches: a tabular baseline and a Graph Neural Network.
 
 ### A. Feature Scaling & Data Partitioning
-Features are scaled using a `StandardScaler` fitted on the training split and applied to the test split. 
-- **Training Partition**: Jan 1, 2020 (85,531 records, 27 unique aircraft).
-- **Testing Partition**: Jan 2, 2020 (17,329 records, 8 unique aircraft).
-*The data is split chronologically with no overlapping aircraft to evaluate the model's generalization to new airspace sectors.*
+Features are scaled using `StandardScaler` instances fitted strictly on the training partition and applied to validation and test sets.
+- **Training Partition**: Jan 1, 2020 (first 80% chronological split, $t = 0\text{ s} - 2880\text{ s}$, 10:00:00–10:47:59): **$77,910$ records** across 27 unique aircraft.
+- **Validation Partition**: Jan 1, 2020 (last 20% chronological split, $t = 2881\text{ s} - 3600\text{ s}$, 10:48:00–10:59:59): **$19,440$ records** across 27 unique aircraft. Used strictly for threshold calibration ($t^* = 0.20$) and fusion tuning without test set exposure.
+- **Out-of-Distribution (OOD) Testing Partition**: Jan 2, 2020 (10:00:00–10:59:59): **$32,550$ records** ($27,544$ normal flights, $5,006$ anomalies) across 8 commercial aircraft and 1 injected phantom identity (`e00002`).
+*The test partition is isolated chronologically and geographically ($\approx 1,500\text{ km}$ domain shift in a northern European FIR corridor) to evaluate generalization to unseen airspace sectors.*
 
 ### B. Baseline Tabular Classifier (Random Forest)
 A classical Random Forest classifier is trained on isolated node-level features, establishing a baseline that ignores relational dependencies between aircraft.
@@ -148,14 +149,23 @@ Analysis of the 100 consecutive snapshots (12:40:41 to 12:42:20) shows:
 
 ## 7. Benchmark Results & Domain Generalization Performance
 
-Evaluating the models on the out-of-distribution (OOD) test set (Jan 2, 2020, located ~1,500 km away from training flights) yielded the following results:
+Evaluating all architectures strictly on the identical out-of-distribution (OOD) test set (Jan 2, 2020, $32,550$ observations located $\approx 1,500\text{ km}$ away from training flights) yielded the following audited results (`research/metrics/benchmark_comparison.json`):
 
-| Model | Input Structure | Precision | Recall | F1-Score | AUC-ROC |
-|---|---|---:|---:|---:|---:|
-| **Tabular Baseline (RF)** | Node-level (Isolated) | 0.0000 | 0.0000 | 0.0000 | 0.4716 |
-| **AeroGuard GNN (GCN)** | Spatial Graph Network | 0.0000 | 0.0000 | 0.0000 | **0.6435** |
+| Model Architecture | Input Features & Structure | Decision Threshold ($t$) | Precision | Recall | F1-Score | Accuracy | Specificity | FPR | ROC-AUC | PR-AUC |
+|---|---|:---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Tabular Baseline (RF)** | Node-level 13D (with coordinates) | Default ($0.50$) | $0.5742$ | $0.0757$ | $0.1338$ | $0.8492$ | $0.9898$ | $0.0102$ | $0.5528$ | $0.2029$ |
+| **Tabular Baseline (RF)** | Node-level 13D (with coordinates) | Calibrated ($0.15$) | $0.4263$ | $0.0815$ | $0.1368$ | $0.8419$ | $0.9801$ | $0.0199$ | $0.5528$ | $0.2029$ |
+| **Original GCN Baseline** | Dynamic Graph (13D Node, unweighted edges) | Default ($0.50$) / Calibrated ($0.12$) | $0.0000$ | $0.0000$ | $0.0000$ | $0.8462$ | $1.0000$ | $0.0000$ | $0.5808$ | $0.2671$ |
+| **Historical Edge-Aware GNN** | GATv2 (12D Node + 4D Edge, double-scaled) | Default ($0.50$) / Calibrated ($0.99$) | $0.2070$ | $0.1306$ | $0.1602$ | $0.7893$ | $0.9090$ | $0.0910$ | $0.4578$ | $0.1884$ |
+| **Repaired Edge-Aware GNN (Spatial)** | Dynamic Graph (12D Coord-free + 4D Relational Edge) | Default ($0.50$) | $0.8772$ | $0.1484$ | $0.2539$ | $0.8658$ | $0.9962$ | $0.0038$ | **$0.7635$** | **$0.4347$** |
+| **Tri-Stream ST-GNN (Official Ours)** | **Spatial GATv2 + Temporal GRU + Kinematic MLP** | **Calibrated ($0.20$)** | **$0.7306$** | **$0.1804$** | **$0.2893$** | **$0.8637$** | **$0.9879$** | **$0.0121$** | $0.6235$ | $0.3720$ |
 
 ### Key Analysis for Reviewers
-1. **Majority Class Collapse**: Under standard `0.5` decision thresholds, both classifiers predict 0 anomalies (yielding $0.00$ F1 scores). This is caused by the geographical shift: test observations are located 1,500 km away, making absolute values (like ranges, RSS, and coordinates) highly out-of-distribution.
-2. **GNN Generalization (AUC-ROC)**: While the Random Forest baseline collapses (AUC-ROC `0.4716`, worse than random guessing), the **GNN achieves an AUC-ROC of 0.6435**. By leveraging neighborhood relative edge features, the GNN learns coordinate-invariant threat signatures that generalize across airspace sectors.
-3. **Threshold Calibration**: The AUC-ROC results show that the GNN can detect anomalies under domain shifts if the classification threshold is adjusted (e.g., using a dynamic threshold at the 83rd percentile).
+1. **Majority Class Collapse of Unweighted GCN**: Under standard decision thresholds, the unweighted GCN baseline predicts 0 anomalies ($0.00$ F1). Ignoring continuous edge metrics causes neighborhood representations to over-smooth across the dominant normal traffic class.
+2. **Relational Generalization via 4D Edge Attributes**: By eliminating absolute coordinates and conditioning attention on 4D relational edge attributes (range, relative altitude, velocity difference, heading separation), the Repaired Spatial GATv2 achieves **ROC-AUC $0.7635$** and **PR-AUC $0.4347$**, generalizing effectively across distant airspace sectors.
+3. **Tri-Stream Operational Performance & False Alarm Control**: Operating the weighted Tri-Stream ST-GNN at the calibrated operational threshold $t^* = 0.20$ achieves **$73.06\%$ precision** and **$0.2893$ F1** with an operational false alarm rate of just **$1.21\%$** (specificity $98.79\%$).
+4. **Per-Attack Operational Nuances & Empirical Boundaries**:
+   - *Altitude Overrides*: $100.0\%$ detection ($660 / 660$) due to joint spatial-temporal and kinematic residual detection.
+   - *Transponder Cloning (`identity_inconsistency`)*: $100.0\%$ detection ($150 / 150$), driven by the kinematic stream's causal duplicate-broadcast detector (`icao_collision`).
+   - *Ghost Aircraft Cruise Mimicry*: Low operational recall ($2.56\%$, $92 / 3,600$) under $t=0.20$ because kinematically smooth synthetic flight profiles mimic nominal cruising aerodynamics without physical step discontinuities.
+   - *Position Jumps*: Low operational recall ($0.17\%$, $1 / 596$) at $t=0.20$ despite high kinematic ranking ROC-AUC ($0.9697$), because only the initial 1-second teleportation step triggers kinematic residuals, while subsequent observations reflect nominal cruising flight.

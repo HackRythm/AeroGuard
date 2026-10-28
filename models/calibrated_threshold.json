@@ -1,0 +1,20 @@
+{
+    "timestamp": "2026-10-12T20:00:13.160133",
+    "random_forest": {
+        "threshold": 0.15000000000000002,
+        "validation_f1": 0.6354401805869074
+    },
+    "original_gcn": {
+        "threshold": 0.12,
+        "validation_f1": 0.3814021067925899
+    },
+    "edge_aware_gnn": {
+        "threshold": 0.99,
+        "validation_f1": 0.5914302957151478
+    },
+    "st_gnn": {
+        "threshold": 0.75,
+        "validation_f1": 0.5348484848484848,
+        "window_size": 5
+    }
+}
