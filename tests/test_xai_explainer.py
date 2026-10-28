@@ -19,6 +19,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 import unittest
 import torch
+import numpy as np
 import pandas as pd
 from torch_geometric.data import Data
 
@@ -219,6 +220,106 @@ class TestXAIExplainer(unittest.TestCase):
             record, data, 0, seq, mask, kin_tensor, fused_prob=0.21, threshold=0.20
         )
         self.assertIn("INCONCLUSIVE", exp_border['attribution_confidence'])
+
+    def test_temporal_explainer_single_valid_observation(self):
+        """Verifies that when only the current timestep is valid, it receives exactly 1.0 importance."""
+        explainer = TemporalExplainer(self.full_model.temporal_stream)
+        seq = torch.randn(5, 25)
+        # Only the current timestep t (index 4) is valid
+        mask = torch.tensor([0, 0, 0, 0, 1], dtype=torch.bool)
+
+        res = explainer.explain_sequence(seq, mask)
+        step_imps = res['temporal_step_importance']
+
+        for i in range(4):
+            self.assertFalse(step_imps[i]['is_valid_observation'])
+            self.assertEqual(step_imps[i]['importance'], 0.0)
+
+        self.assertTrue(step_imps[4]['is_valid_observation'])
+        self.assertAlmostEqual(step_imps[4]['importance'], 1.0, places=4)
+        self.assertEqual(res['peak_timestep'], 't')
+        self.assertEqual(res['valid_timesteps_count'], 1)
+
+    def test_temporal_explainer_constant_sequence_fallback(self):
+        """Verifies that constant inputs (where gradients may be zero) fallback gracefully without NaNs."""
+        explainer = TemporalExplainer(self.full_model.temporal_stream)
+        seq = torch.zeros(5, 25)
+        mask = torch.tensor([1, 1, 1, 1, 1], dtype=torch.bool)
+
+        res = explainer.explain_sequence(seq, mask)
+        step_imps = res['temporal_step_importance']
+
+        for item in step_imps:
+            self.assertTrue(np.isfinite(item['importance']))
+            self.assertGreaterEqual(item['importance'], 0.0)
+            self.assertLessEqual(item['importance'], 1.0)
+
+        total_imp = sum(item['importance'] for item in step_imps)
+        self.assertAlmostEqual(total_imp, 1.0, places=3)
+
+    def test_unified_explainer_finite_bounds_and_schema_integrity(self):
+        """Checks all numeric fields across the unified dossier for strict finiteness and schema compliance."""
+        unified = AeroGuardUnifiedExplainer(self.full_model)
+        record = pd.Series({
+            'timestamp': '2020-01-02 10:30:00',
+            'icao24': '400010',
+            'callsign': 'BAW101',
+            'disp_ratio': 1.05,
+            'alt_residual': 120.0,
+            'icao_collision': 0.0,
+            'track_jump_flag': 0.0
+        })
+        data = Data(
+            x=torch.randn(4, 12),
+            edge_index=torch.tensor([[0, 1, 2], [1, 2, 0]], dtype=torch.long),
+            edge_attr=torch.randn(3, 4)
+        )
+        seq = torch.randn(5, 25)
+        mask = torch.tensor([0, 1, 1, 1, 1], dtype=torch.bool)
+        kin_tensor = torch.randn(11)
+
+        exp = unified.generate_full_explanation(
+            record=record,
+            spatial_graph=data,
+            target_node_idx=0,
+            temporal_seq=seq,
+            temporal_mask=mask,
+            scaled_kin_tensor=kin_tensor,
+            fused_prob=0.15,
+            threshold=0.20,
+            ground_truth_label=0
+        )
+
+        self.assertIn(exp['threat_level'], ['NOMINAL', 'ELEVATED', 'CRITICAL'])
+        self.assertIn(exp['case_category'], ['TRUE_POSITIVE', 'FALSE_POSITIVE', 'TRUE_NEGATIVE', 'FALSE_NEGATIVE'])
+        self.assertIn(exp['attribution_confidence'], ['HIGH', 'MODERATE', 'LOW', 'INCONCLUSIVE'])
+
+        # Spatial assertions
+        sp = exp['spatial_explanation']
+        self.assertLessEqual(len(sp['top_node_features']), 5)
+        self.assertEqual(len(sp['all_node_features']), 12)
+        for f in sp['all_node_features']:
+            self.assertTrue(np.isfinite(f['importance']))
+            self.assertGreaterEqual(f['importance'], 0.0)
+
+        # Temporal assertions
+        tp = exp['temporal_explanation']
+        self.assertEqual(len(tp['temporal_step_importance']), 5)
+        for t in tp['temporal_step_importance']:
+            self.assertTrue(np.isfinite(t['importance']))
+            self.assertGreaterEqual(t['importance'], 0.0)
+
+        # Kinematic assertions
+        kp = exp['kinematic_explanation']
+        self.assertEqual(len(kp['all_kinematic_residuals']), 11)
+        for k in kp['all_kinematic_residuals']:
+            self.assertTrue(np.isfinite(k['importance']))
+            self.assertTrue(np.isfinite(k['raw_value']))
+
+        # Domain limitation check
+        self.assertIn('limitations_and_uncertainty', exp)
+        self.assertGreater(len(exp['limitations_and_uncertainty']), 20)
+
 
 if __name__ == "__main__":
     unittest.main()

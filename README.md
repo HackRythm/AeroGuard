@@ -152,12 +152,14 @@ AeroGuard AI incorporates an operational Explainable AI engine (`scripts/aerogua
   - `aeroguard_server.py` — Asynchronous Command Center backend API service (port 8000).
 - [`tests/`](./tests/):
   - `test_evaluate_benchmarks.py` — 14 tests covering baseline observation alignment, shuffled row immunity, and error handling.
+  - `test_xai_explainer.py` — 12 unit tests for XAI attribution, temporal saliency, and edge-case fallbacks.
   - `test_ablation_protocol.py` — 11 tests validating dynamic multi-stream ablation and isolated stream metrics.
   - `test_server.py` — 11 tests validating async REST API endpoints.
   - `test_live_inference.py` — 9 tests covering kinematics, track buffer, masking, and live inference.
-  - `test_xai_explainer.py` — 9 unit tests for XAI attribution components.
   - `test_rtl_sdr_adapter.py` — 8 tests covering IQ ingestion, PPM modulation, matched filter, and CRC-24.
+  - `test_server_robustness.py` — 8 tests for missing files, empty timestamps, malformed bodies, and repeated requests.
   - `test_dashboard_consistency.py` — 5 tests validating frontend state and alert schema.
+  - `test_kinematic_sensitivity.py` — 5 tests auditing near-zero scale parameters and numerical sensitivity.
   - `test_st_gnn.py` — 4 unit tests for ST-GNN forward pass and masking.
   - `test_runtime_e2e_validation.py` — 4 tests validating live simulation bursts and decision outcomes.
   - `test_end_to_end_sdr_st_gnn.py` — 1 end-to-end integration test (IQ $\to$ ST-GNN $\to$ XAI).
@@ -184,11 +186,11 @@ npm ci
 cd ..
 ```
 
-### 2. Run Complete Automated Test Suite (76 Tests)
+### 2. Run Complete Automated Test Suite (94 Tests)
 ```bash
 python -m unittest discover -s tests
 ```
-*Result*: `Ran 76 tests in ~40s, OK` (100% passing across all 10 test modules).
+*Result*: `Ran 94 tests in ~35s, OK` (100% passing across all 12 test modules).
 
 ### 3. Launch Command Center Backend API Service
 ```bash
@@ -202,3 +204,14 @@ cd frontend
 npm.cmd run dev
 ```
 Open `http://localhost:5173` in your browser.
+
+---
+
+## Troubleshooting & Known Limitations
+
+- **Kinematic Residual Scaler Sensitivity**:
+  In `models/scaler_kinematic.joblib`, features `accel_residual` and `turn_residual` have near-zero variance ($\sigma \sim 10^{-15}$) because smooth synthetic training trajectories yield mathematically zero finite-difference residuals. Dividing machine-precision noise by $\sim 10^{-15}$ causes minor hardware BLAS roundoff variations in isolated Kinematic-Only ROC-AUC ($0.5193 - 0.5468$). Full Tri-Stream ST-GNN ROC-AUC remains stable ($0.6235$). All model checkpoints and scalers are frozen in v1.0.0 to preserve audited benchmark metrics. See [docs/kinematic_numerical_sensitivity_audit.md](./docs/kinematic_numerical_sensitivity_audit.md) for the scientific audit and v1.1.0 retraining plan.
+- **Dataset Regeneration**:
+  On a clean clone, run `python scripts/generate_aeroguard_dataset.py` followed by `python scripts/audit_st_gnn_metrics.py` to generate required prediction artifacts.
+- **Historical Baseline Predictions**:
+  `research/evaluate_benchmarks.py` dynamically marks legacy baselines (Random Forest, Logistic Regression, Original GCN) as `UNAVAILABLE` if `data/aero_guard_test_predictions.csv` is absent, while preserving canonical comparative metrics. To regenerate legacy baseline predictions, execute `python scripts/train_models.py`.

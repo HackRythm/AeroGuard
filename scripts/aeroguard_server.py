@@ -335,11 +335,15 @@ async def handle_telemetry_snapshot(request):
 
 async def handle_telemetry_tick(request):
     """Advances replay stream by one or specified number of timesteps."""
+    if not state.timestamps:
+        return web.json_response({"error": "No telemetry data loaded"}, status=503)
+
     step = 1
     if request.can_read_body:
         try:
             data = await request.json()
-            step = int(data.get("step", 1))
+            if isinstance(data, dict):
+                step = int(data.get("step", 1))
         except Exception:
             step = 1
 
@@ -351,10 +355,11 @@ async def handle_telemetry_tick(request):
 
 async def handle_alerts(request):
     """Returns active alerts list for current snapshot."""
-    if not state.timestamps:
+    if not state.timestamps or state.df_preds is None:
         return web.json_response([])
 
-    ts = state.timestamps[state.current_time_idx]
+    current_idx = state.current_time_idx % len(state.timestamps)
+    ts = state.timestamps[current_idx]
     group = state.time_grouped.get(ts, pd.DataFrame())
 
     alerts = []
@@ -388,9 +393,11 @@ def _compute_explanation_sync(icao24: str, ts: str):
         return state.explanation_cache[cache_key]
 
     # Look up record in df_preds for exact timestamp
-    matches = state.df_preds[(state.df_preds['icao24'] == icao24) & (state.df_preds['timestamp'] == ts)]
-    if len(matches) == 0 and not ts:
-        matches = state.df_preds[state.df_preds['icao24'] == icao24]
+    matches = pd.DataFrame()
+    if state.df_preds is not None and not state.df_preds.empty:
+        matches = state.df_preds[(state.df_preds['icao24'] == icao24) & (state.df_preds['timestamp'] == ts)]
+        if len(matches) == 0 and not ts:
+            matches = state.df_preds[state.df_preds['icao24'] == icao24]
 
     if len(matches) == 0 and icao24 in state.explanation_cache:
         return state.explanation_cache[icao24]
@@ -459,7 +466,10 @@ async def handle_xai_explain(request):
         return web.json_response(state.explanation_cache[cache_key])
 
     # Execute computation asynchronously in thread pool
-    loop = asyncio.get_event_loop()
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.get_event_loop()
     dossier = await loop.run_in_executor(state.executor, _compute_explanation_sync, icao24, ts)
 
     if dossier is None and icao24 in state.explanation_cache:
@@ -532,12 +542,17 @@ async def handle_receiver_live_tracks(request):
 
 async def handle_receiver_feed_telemetry(request):
     """Feeds telemetry records directly into the SDR live track buffer."""
-    data = await request.json()
+    try:
+        data = await request.json()
+    except Exception as ex:
+        return web.json_response({"error": f"Invalid JSON payload: {ex}"}, status=400)
+
     records = data.get("records", []) if isinstance(data, dict) else data
     if not isinstance(records, list):
         records = [records]
     for r in records:
-        live_buffer.ingest_telemetry_frame(r)
+        if isinstance(r, dict):
+            live_buffer.ingest_telemetry_frame(r)
     return web.json_response({"status": "INGESTED", "records_ingested": len(records), "active_tracks": len(live_buffer.tracks)})
 
 async def handle_receiver_live_infer(request):
@@ -558,9 +573,16 @@ async def handle_simulation_attack_burst(request):
     Injects a simulated ADS-B attack burst into the active live track buffer and evaluates ST-GNN.
     Clearly flags the attack as a SIMULATED TEST EVENT for academic demonstration.
     """
-    data = await request.json() if request.can_read_body else {}
-    attack_type = data.get("attack_type", "altitude_teleport")
-    target_icao = data.get("icao24", "500006").upper()
+    try:
+        data = await request.json() if request.can_read_body else {}
+        if not isinstance(data, dict):
+            data = {}
+    except Exception:
+        data = {}
+
+    attack_type = str(data.get("attack_type", "altitude_teleport"))
+    raw_icao = data.get("icao24", "500006")
+    target_icao = str(raw_icao if raw_icao is not None else "500006").upper()
 
     # Ensure baseline track exists in buffer
     track = live_buffer.get_or_create_track(target_icao, callsign="RYR205")

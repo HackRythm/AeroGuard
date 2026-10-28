@@ -111,12 +111,12 @@ All models were evaluated on the out-of-distribution (OOD) Jan 2, 2020 test set 
 
 ## 4. Step-by-Step Demonstration Instructions
 
-### Step 1: Execute Complete Automated Test Suite (78 Tests)
+### Step 1: Execute Complete Automated Test Suite (94 Tests)
 Run the complete unit and integration test suite:
 ```powershell
 .venv\Scripts\python.exe -m unittest discover -s tests
 ```
-*Expected Output*: `Ran 78 tests in ~15s, OK`. Covers baseband DSP, CRC-24, ST-GNN inference, XAI attribution, WebSocket streaming, benchmark evaluation, ablation protocol, and attack burst simulations.
+*Expected Output*: `Ran 94 tests in ~35s, OK`. Covers baseband DSP, CRC-24, ST-GNN inference, XAI attribution, WebSocket streaming, benchmark evaluation, ablation protocol, server robustness, and attack burst simulations.
 
 ### Step 2: Test End-to-End Software SDR Pipeline
 Run the dedicated end-to-end integration test:
@@ -173,7 +173,7 @@ curl -X POST http://127.0.0.1:8000/api/simulation/attack_burst -H "Content-Type:
 | SDR Receiver Subsystem | `scripts/rtl_sdr_adapter.py` | Software-defined receiver with envelope detector, PPM matched filtering & CRC-24. |
 | Live Inference Pipeline | `scripts/live_st_gnn_inference.py` | Track buffer, discrete kinematics, sliding window ($T=5$), ST-GNN. |
 | Multi-Stream XAI Engine | `scripts/aeroguard_explainer.py` | PyG GNNExplainer, temporal saliency, kinematic residuals. |
-| Full Automated Suite | `tests/` (78 tests) | 100% passing test discovery suite covering DSP, ML, WebSocket, benchmarks, ablation, and APIs. |
+| Full Automated Suite | `tests/` (94 tests) | 100% passing test discovery suite covering DSP, ML, WebSocket, benchmarks, ablation, server robustness, and APIs. |
 | Interactive Web Dashboard | `frontend/` (React + Vite) | Command center radar, architecture inspector, and 4-tab XAI panel. |
 | Audited XAI Case Studies | `docs/xai_audit_cases.json` | Audited dossiers (true anomalies, normal, borderline). |
 | Technical Reports | `docs/` | Comprehensive reports covering GNN repair, ST-GNN evaluation, and XAI. |

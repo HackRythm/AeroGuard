@@ -99,7 +99,7 @@ class SpatialExplainer:
 
             grad = x_clone.grad[target_node_idx].cpu().numpy()
             inp = x_clone[target_node_idx].detach().cpu().numpy()
-            saliency = np.abs(grad * inp)
+            saliency = np.nan_to_num(np.abs(grad * inp), nan=0.0, posinf=0.0, neginf=0.0)
             sal_sum = np.sum(saliency)
             sal_norm = saliency / (sal_sum + 1e-8) if sal_sum > 0 else np.ones(12) / 12.0
 
@@ -141,6 +141,7 @@ class SpatialExplainer:
             node_mask = np.abs(grad * inp)
             edge_mask = np.zeros(edge_index.shape[1], dtype=np.float32)
 
+        node_mask = np.nan_to_num(node_mask, nan=0.0, posinf=0.0, neginf=0.0)
         node_mask_sum = np.sum(np.abs(node_mask))
         node_mask_norm = node_mask / (node_mask_sum + 1e-8) if node_mask_sum > 0 else np.ones(12) / 12.0
 
@@ -221,7 +222,7 @@ class TemporalExplainer:
 
         grad = seq_tensor.grad.squeeze(0).cpu().numpy()  # [T, 25]
         inp = seq_tensor.squeeze(0).detach().cpu().numpy()  # [T, 25]
-        saliency = np.abs(grad * inp)  # [T, 25]
+        saliency = np.nan_to_num(np.abs(grad * inp), nan=0.0, posinf=0.0, neginf=0.0)  # [T, 25]
 
         T = seq.shape[0]
         mask_np = mask.cpu().numpy().astype(bool) if mask is not None else np.ones(T, dtype=bool)
@@ -306,7 +307,7 @@ class KinematicExplainer:
 
         grad = k_tensor.grad.squeeze(0).cpu().numpy()
         inp = k_tensor.squeeze(0).detach().cpu().numpy()
-        saliency = np.abs(grad * inp)
+        saliency = np.nan_to_num(np.abs(grad * inp), nan=0.0, posinf=0.0, neginf=0.0)
         sal_sum = np.sum(saliency)
         sal_norm = saliency / (sal_sum + 1e-8) if sal_sum > 0 else np.ones(11) / 11.0
 

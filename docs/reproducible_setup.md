@@ -99,7 +99,7 @@ Because large CSV datasets (>15 MB) are excluded from Git to prevent repository 
 The test suite validates pipeline components, encoders, mathematical metrics, and attribution logic using in-memory fixtures, mock message packets, and audited JSON dossiers. No CSV datasets are required:
 
 ```bash
-# Run all automated unit and integration tests (71 tests)
+# Run all automated unit and integration tests (94 tests)
 # On a fresh clone, tests requiring ungenerated CSVs are skipped gracefully.
 python -m unittest discover -s tests -p "test_*.py"
 ```
