@@ -41,10 +41,17 @@ Aircraft observations (WGS84 Track Sequences)
 - **Edges ($E$)**: Bidirectional connections formed dynamically between aircraft flying within $100$ km of each other. 
 - **Edge Features**: 4-dimensional relative vectors mapping range, relative altitude, relative velocity, and shortest angular heading differences, capturing spatial inconsistencies between spoofed nodes and surrounding traffic.
 
-### 3. Chronological Attack Injections
-We injected 7 realistic ADS-B anomaly classes partitioned chronologically to eliminate temporal leakage:
+### 3. Chronological Attack Injections & Anomaly Coverage
+AeroGuard AI models 7 realistic synthetic ADS-B anomaly classes partitioned chronologically to eliminate temporal leakage:
 - **Kinematic Anomalies**: `position_jump` (teleportation), `altitude_anomaly` (override), `velocity_anomaly` (drift), `heading_anomaly` (split vectors).
-- **Advanced Anomalies**: `vertical_rate_anomaly`, `ghost_aircraft` (synthesized aircraft; Doppler shifts are dynamically calculated based on target motion profiles), and `identity_inconsistency` (split coordinate records under duplicate ICAO addresses).
+- **Advanced Anomalies**: `vertical_rate_anomaly`, `ghost_aircraft` (synthesized aircraft; Doppler shifts dynamically calculated based on target motion profiles), and `identity_inconsistency` (split coordinate records under duplicate ICAO addresses).
+
+> [!IMPORTANT]
+> **Synthetic Data & Anomaly Benchmark Scope Disclosure**:
+> - All 7 anomaly types are modeled, injected, and present in the **synthetic training/validation dataset** (`data/aero_guard_train.csv`: 7,314 anomaly records).
+> - **Four anomaly classes** (`altitude_anomaly`, `ghost_aircraft`, `position_jump`, `identity_inconsistency`) are included and evaluated in the held-out **out-of-distribution (OOD) test benchmark** (`data/aero_guard_test.csv`: 5,006 anomaly records).
+> - **Three anomaly classes** (`velocity_anomaly`, `heading_anomaly`, `vertical_rate_anomaly`) are **training-only** because of the 8-aircraft fleet size constraint of the northern test sector (`num_anomaly_flights = 2` during test generation). They were not independently evaluated on the OOD test set.
+> - All benchmarks are evaluated on **synthetic, physics-simulated ADS-B telemetry**, not operational radar or live over-the-air RF transmissions.
 
 ---
 
@@ -97,6 +104,20 @@ All architectures evaluated strictly on the identical **32,550 out-of-distributi
 
 *Note: Verified against `research/metrics/benchmark_comparison.json`. Baseline predictions are aligned to ground-truth observations on composite key `(timestamp, icao24, latitude, longitude, altitude)`. Random Forest detects 100% of altitude overrides (660/660) with zero false alarms at t=0.50, but detects 0% of ghost aircraft, position jumps, or transponder cloning. The official deployed architecture is the weighted Tri-Stream ST-GNN ($0.40 \cdot p_{\text{spatial}} + 0.35 \cdot p_{\text{temporal}} + 0.25 \cdot p_{\text{kinematic}}$) operated at the calibrated threshold $t=0.20$. Standalone spatial models and historical unaligned numbers (preserved in `research/metrics/historical_unaligned_benchmarks.json`) remain distinct audit artifacts.*
 
+### Scientific Research Figures
+
+Publication-grade evaluation figures generated from genuine project artifacts and benchmark predictions ([reproduction instructions](docs/figures/README.md)):
+
+| Figure | Description | Preview |
+|:---:|---|:---:|
+| **Figure 1** | **[Seven-Class Synthetic Anomaly Coverage](docs/figures/README.md#figure-1--seven-class-synthetic-anomaly-coverage)**<br>Training/validation dataset vs. out-of-distribution test dataset distribution, explicitly distinguishing evaluated benchmark classes (4 scenarios) from training-only classes (3 scenarios). | [![Figure 1](docs/figures/figure1_seven_class_anomaly_coverage.png)](docs/figures/figure1_seven_class_anomaly_coverage.png) |
+| **Figure 2** | **[Calibrated Operational Confusion Matrix (t = 0.20)](docs/figures/README.md#figure-2--calibrated-operational-confusion-matrix-t--020)**<br>High-contrast decision matrix on 32,550 test samples at calibrated threshold $t=0.20$ (Precision: 73.06%, Recall: 18.04%, Specificity: 98.79%, Accuracy: 86.37%). | [![Figure 2](docs/figures/figure2_confusion_matrix_calibrated.png)](docs/figures/figure2_confusion_matrix_calibrated.png) |
+| **Figure 3** | **[Continuous Ranking Curves (ROC & Precision-Recall)](docs/figures/README.md#figure-3--roc-and-precisionrecall-pr-curves)**<br>Continuous diagnostic ranking curves showing ROC-AUC = 0.6235 and PR-AUC = 0.3720 with marked operational calibration points ($t=0.20$ and $t=0.50$). | [![Figure 3](docs/figures/figure3_roc_and_pr_curves.png)](docs/figures/figure3_roc_and_pr_curves.png) |
+| **Figure 4** | **[Tri-Stream ST-GNN Architecture Diagram](docs/figures/README.md#figure-4--st-gnn-architecture-diagram)**<br>Spatio-Temporal GNN architecture diagram with spatial GATv2, temporal GRU, kinematic MLP, and calibrated probabilistic fusion ($0.40 / 0.35 / 0.25$). | [![Figure 4](docs/figures/figure4_st_gnn_architecture.png)](docs/figures/figure4_st_gnn_architecture.png) |
+| **Figure 5** | **[Flight Trajectory & Attack Signatures](docs/figures/README.md#figure-5--genuine-flight-trajectory-visualization)**<br>Multi-aircraft airspace map showing genuine OOD trajectories, position teleportation offset, ghost flight insertion, and altitude step override. | [![Figure 5](docs/figures/figure5_flight_trajectory_visualization.png)](docs/figures/figure5_flight_trajectory_visualization.png) |
+
+*Full documentation, interpretations, and reproduction CLI commands: [`docs/figures/README.md`](docs/figures/README.md).*
+
 ---
 
 ## Software-Defined Communication (SDC) Subsystem
@@ -136,6 +157,7 @@ AeroGuard AI incorporates an operational Explainable AI engine (`scripts/aerogua
   - `aero_guard_train.csv` / `aero_guard_test.csv` — Standardized training and OOD test sets.
   - `st_gnn_test_predictions.csv` — Full OOD prediction evaluation results with stream probabilities.
 - [`docs/`](./docs/):
+  - [`figures/`](./docs/figures/) — Publication-grade scientific evaluation figures and reproduction guide.
   - `sdc_semester_demonstration_guide.md` — Semester 3 final demonstration guide and SDC curriculum alignment.
   - `xai_explanation_report.md` — Detailed technical report on Multi-Stream XAI and representative case studies.
   - `xai_audit_cases.json` — 8 audited operational dossiers (True Positives, True Negatives, False Positives, False Negatives, Borderline).
