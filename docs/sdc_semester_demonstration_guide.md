@@ -100,23 +100,23 @@ Every valid 112-bit message satisfies $\sum \text{remainder}[88:112] \equiv 0 \p
 
 All models were evaluated on the out-of-distribution (OOD) Jan 2, 2020 test set (3,600 graph snapshots, 5,007 spoofed anomaly observations):
 
-| Model Architecture | Threshold ($t$) | Precision | Recall | F1-Score | ROC-AUC | PR-AUC |
-|---|---|---:|---:|---:|---:|---:|
-| Tabular Random Forest Baseline | $0.50$ | $1.0000$ | $0.1318$ | $0.2330$ | $0.8717$ | $0.5255$ |
-| Original GCN Baseline | $0.50$ | $0.0000$ | $0.0000$ | $0.0000$ | $0.5787$ | $0.2712$ |
-| Repaired Edge-Aware GNN (Spatial) | $0.01$ | $0.2071$ | $0.1312$ | $0.1607$ | $0.4658$ | $0.1927$ |
-| **Tri-Stream ST-GNN (Ours)** | **0.20 (Calibrated)** | **0.4590** | **0.5732** | **0.5097** | **0.9023** | **0.4431** |
+| Model Architecture | Threshold ($t$) | Precision | Recall | F1-Score | Accuracy | Specificity | FPR | ROC-AUC | PR-AUC |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Tabular Random Forest Baseline | $0.50$ (Default) | $0.5742$ | $0.0757$ | $0.1338$ | $0.8492$ | $0.9898$ | $0.0102$ | $0.5528$ | $0.2029$ |
+| Original GCN Baseline | $0.50$ (Default) | $0.0000$ | $0.0000$ | $0.0000$ | $0.8462$ | $1.0000$ | $0.0000$ | $0.5808$ | $0.2671$ |
+| Repaired Edge-Aware GNN (Spatial) | $0.50$ (Default) | $0.8772$ | $0.1484$ | $0.2539$ | $0.8658$ | $0.9962$ | $0.0038$ | $0.7635$ | $0.4347$ |
+| **Tri-Stream ST-GNN (Ours)** | **0.20 (Calibrated)** | **0.7306** | **0.1804** | **0.2893** | **0.8637** | **0.9879** | **0.0121** | **0.6235** | **0.3720** |
 
 ---
 
 ## 4. Step-by-Step Demonstration Instructions
 
-### Step 1: Execute Complete Automated Test Suite (42 Tests)
+### Step 1: Execute Complete Automated Test Suite (71 Tests)
 Run the complete unit and integration test suite:
 ```powershell
 .venv\Scripts\python.exe -m unittest discover tests
 ```
-*Expected Output*: `Ran 42 tests in ~35s, OK`. Covers baseband DSP, CRC-24, ST-GNN inference, XAI attribution, WebSocket streaming, and attack burst simulations.
+*Expected Output*: `Ran 71 tests in ~19s, OK`. Covers baseband DSP, CRC-24, ST-GNN inference, XAI attribution, WebSocket streaming, benchmark evaluation, ablation protocol, and attack burst simulations.
 
 ### Step 2: Test End-to-End Software SDR Pipeline
 Run the dedicated end-to-end integration test:

@@ -134,6 +134,6 @@ python research/ablation_protocol.py
 # Step 4: Execute Scientific XAI Attribution Audit
 python research/audit_xai_scientific.py
 
-# Step 5: Execute Automated Verification Test Suite (51 Tests)
+# Step 5: Execute Automated Verification Test Suite (71 Tests across 10 modules)
 python -m unittest discover -s tests -p "test_*.py"
 ```

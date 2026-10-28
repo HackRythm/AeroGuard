@@ -22,12 +22,12 @@ The table below benchmarks the proposed **Tri-Stream ST-GNN** against tabular an
 
 | Model Architecture | Input Features & Structure | Decision Threshold ($t$) | Precision | Recall | F1-Score | Specificity | False Alarm Rate (FPR) | ROC-AUC | PR-AUC | Total Observations |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Random Forest (Tabular)** | Node-level 13D (with absolute coordinates) | Default ($0.50$) | $0.5742$ | $0.0757$ | $0.1338$ | $0.9942$ | $0.0058$ | $0.5528$ | $0.2029$ | $32,550$ |
-| **Random Forest (Tabular)** | Node-level 13D (with absolute coordinates) | Calibrated ($0.15$) | $0.4263$ | $0.0815$ | $0.1368$ | $0.9885$ | $0.0115$ | $0.5528$ | $0.2029$ | $32,550$ |
-| **Original GCN Baseline** | Dynamic Graph (13D Node, unweighted edges) | Default ($0.50$) | $0.0000$ | $0.0000$ | $0.0000$ | **$1.0000$** | **$0.0000$** | $0.5808$ | $0.2671$ | $32,550$ |
-| **Original GCN Baseline** | Dynamic Graph (13D Node, unweighted edges) | Calibrated ($0.12$) | $0.0000$ | $0.0000$ | $0.0000$ | **$1.0000$** | **$0.0000$** | $0.5808$ | $0.2671$ | $32,550$ |
-| **Historical Edge-Aware GNN** | GATv2 (12D Node + 4D Edge, double-scaled) | Default ($0.50$) | $0.2070$ | $0.1306$ | $0.1602$ | $0.9492$ | $0.0508$ | $0.4578$ | $0.1884$ | $32,550$ |
-| **Historical Edge-Aware GNN** | GATv2 (12D Node + 4D Edge, double-scaled) | Calibrated ($0.99$) | $0.2475$ | $0.1282$ | $0.1689$ | $0.9602$ | $0.0398$ | $0.4578$ | $0.1884$ | $32,550$ |
+| **Random Forest (Tabular)** | Node-level 13D (with absolute coordinates) | Default ($0.50$) | $1.0000$ | $0.1318$ | $0.2330$ | **$1.0000$** | **$0.0000$** | $0.8047$ | $0.4107$ | $32,550$ |
+| **Random Forest (Tabular)** | Node-level 13D (with absolute coordinates) | Calibrated ($0.15$) | $0.6897$ | $0.1318$ | $0.2214$ | $0.9892$ | $0.0108$ | $0.8047$ | $0.4107$ | $32,550$ |
+| **Original GCN Baseline** | Dynamic Graph (13D Node, unweighted edges) | Default ($0.50$) | $0.0000$ | $0.0000$ | $0.0000$ | **$1.0000$** | **$0.0000$** | $0.4778$ | $0.1372$ | $32,550$ |
+| **Original GCN Baseline** | Dynamic Graph (13D Node, unweighted edges) | Calibrated ($0.12$) | $0.0000$ | $0.0000$ | $0.0000$ | **$1.0000$** | **$0.0000$** | $0.4778$ | $0.1372$ | $32,550$ |
+| **Historical Edge-Aware GNN** | GATv2 (12D Node + 4D Edge, double-scaled) | Default ($0.50$) | $0.2089$ | $0.1318$ | $0.1616$ | $0.9092$ | $0.0908$ | $0.6552$ | $0.3086$ | $32,550$ |
+| **Historical Edge-Aware GNN** | GATv2 (12D Node + 4D Edge, double-scaled) | Calibrated ($0.99$) | $0.2544$ | $0.1318$ | $0.1737$ | $0.9298$ | $0.0702$ | $0.6552$ | $0.3086$ | $32,550$ |
 | **Repaired Edge-Aware GNN** | GATv2 (12D Coord-free + 4D Normalized Relational) | Default ($0.50$) | $0.8772$ | $0.1484$ | $0.2539$ | $0.9962$ | $0.0038$ | **$0.7635$** | **$0.4347$** | $32,550$ |
 | **Tri-Stream ST-GNN (Ours)** | Spatial GATv2 + Temporal GRU + Kinematic MLP | Default ($0.50$) | **$0.8825$** | $0.1470$ | $0.2521$ | $0.9964$ | **$0.0036$** | $0.6235$ | $0.3720$ | $32,550$ |
 | **Tri-Stream ST-GNN (Ours)** | Spatial GATv2 + Temporal GRU + Kinematic MLP | **Calibrated ($0.20$)** | **$0.7306$** | **$0.1804$** | **$0.2893$** | **$0.9879$** | **$0.0121$** | $0.6235$ | $0.3720$ | $32,550$ |
@@ -53,6 +53,14 @@ A thorough audit of project documentation identified two historical discrepancie
   - As proven in [`docs/edge_aware_gnn_audit.md`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/docs/edge_aware_gnn_audit.md), this collapse was caused by an evaluation row-ordering misalignment (`df.groupby('timestamp')` vs `icao24`-sorted labels) and an edge attribute double-scaling defect that divided normalized deltas by $4,364\text{ ft}$.
   - When properly aligned and scaled in [`scripts/train_edge_aware_repaired.py`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/scripts/train_edge_aware_repaired.py), the spatial encoder achieves **ROC-AUC $0.7635$** and **PR-AUC $0.4347$**.
 
+### Discrepancy 3: Historical Baseline Row-Ordering Misalignment
+* **The Discrepancy**: In preliminary benchmark tables, Random Forest was listed with $\text{Precision}=0.5742, \text{Recall}=0.0757, F_1=0.1338, \text{ROC-AUC}=0.5528$.
+* **Reconciliation Finding**:
+  - In `data/aero_guard_test_predictions.csv`, baseline predictions were saved sorted chronologically by timestamp across all aircraft, whereas `data/st_gnn_test_predictions.csv` was sorted by flight (`icao24`).
+  - Evaluating baseline predictions without observation alignment evaluated predictions against index-mismatched observation labels.
+  - When deterministically aligned on the composite primary key `(timestamp, icao24, latitude, longitude, altitude)`, Random Forest's genuine performance is revealed: $\text{Precision}=\mathbf{1.0000}, \text{Recall}=\mathbf{0.1318}, F_1=\mathbf{0.2330}, \text{ROC-AUC}=\mathbf{0.8047}$.
+  - This matches the original Week 1 confusion matrix exactly ($\text{TN}=27,544, \text{FP}=0, \text{FN}=4,346, \text{TP}=660$). Random Forest detects $100\%$ of altitude overrides ($660/660$), but $0\%$ of ghost flights, position jumps, or transponder collisions. The historical unaligned numbers are preserved in [`research/metrics/historical_unaligned_benchmarks.json`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/research/metrics/historical_unaligned_benchmarks.json) as an audit trail.
+
 ---
 
 ## 4. Multi-Stream Ablation Study
@@ -64,8 +72,8 @@ To evaluate the unique contribution of each architectural stream, the constituen
 | **Spatial Stream Alone** | Frozen Repaired GATv2Conv with 4D edge attributes | $0.50$ | $0.8772$ | $0.1484$ | $0.2539$ | **$0.7635$** | **$0.4347$** |
 | **Temporal Stream Alone** | Causal Recurrent GRU ($T=5$, masked sequence) | $0.50$ | $0.8777$ | $0.1476$ | $0.2527$ | $0.3333$ | $0.2499$ |
 | **Kinematic Stream Alone** | Physical Invariant MLP (11 motion residuals) | $0.50$ | $0.1388$ | $0.1686$ | $0.1523$ | $0.5468$ | $0.2077$ |
-| **Fusion: Average Probability** | $(p_{\text{spatial}} + p_{\text{temporal}} + p_{\text{kinematic}}) / 3$ | $0.27$ | $0.6120$ | $0.1780$ | $0.2758$ | $0.6220$ | $0.3685$ |
-| **Fusion: Maximum Probability** | $\max(p_{\text{spatial}}, p_{\text{temporal}}, p_{\text{kinematic}})$ | $0.73$ | $0.5410$ | $0.1650$ | $0.2529$ | $0.6115$ | $0.3540$ |
+| **Fusion: Average Probability** | $(p_{\text{spatial}} + p_{\text{temporal}} + p_{\text{kinematic}}) / 3$ | $0.27$ | $0.7379$ | $0.1794$ | $0.2886$ | $0.6228$ | $0.3702$ |
+| **Fusion: Maximum Probability** | $\max(p_{\text{spatial}}, p_{\text{temporal}}, p_{\text{kinematic}})$ | $0.73$ | $0.4774$ | **$0.3076$** | **$0.3741$** | $0.6203$ | $0.3747$ |
 | **Fusion: Weighted Probability (ST-GNN)** | $0.40 \cdot p_{\text{sp}} + 0.35 \cdot p_{\text{temp}} + 0.25 \cdot p_{\text{kin}}$ | **$0.20$** | **$0.7306$** | **$0.1804$** | **$0.2893$** | $0.6235$ | $0.3720$ |
 
 ### 4.1 Diagnostic Discrimination by Anomaly Type (Isolated ROC-AUC)
@@ -76,7 +84,9 @@ Evaluating each stream's continuous anomaly score against normal traffic isolate
 | **Spatial Stream (GATv2)** | **$1.0000$** | **$0.8422$** | $0.1351$ | $0.3300$ |
 | **Temporal Stream (GRU, T=5)** | **$1.0000$** | $0.2399$ | $0.1827$ | $0.2385$ |
 | **Kinematic Stream (MLP)** | $0.4525$ | $0.4752$ | **$0.9697$** | **$0.9994$** |
-| **Tri-Stream Fused ST-GNN** | **$0.9994$** | $0.4824$ | **$0.9654$** | **$0.9954$** |
+| **Fusion: Average Probability** | $0.9993$ | $0.4814$ | $0.9658$ | $0.9955$ |
+| **Fusion: Maximum Probability** | $0.9999$ | $0.4778$ | $0.9660$ | $0.9958$ |
+| **Tri-Stream Fused ST-GNN (Official)** | **$0.9994$** | $0.4824$ | **$0.9654$** | **$0.9954$** |
 
 ### 4.2 Key Insights from the Ablation
 1. **Resolution of Transponder Cloning (`identity_inconsistency`)**:

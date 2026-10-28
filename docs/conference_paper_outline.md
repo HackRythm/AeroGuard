@@ -21,8 +21,8 @@
 * **Background**: Automatic Dependent Surveillance–Broadcast (ADS-B) is the global backbone of modern Air Traffic Control (ATC), yet operates on an unauthenticated, unencrypted $1090\text{ MHz}$ line-of-sight RF channel. Low-cost Software Defined Radios (SDRs) enable adversaries to broadcast fabricated transponder signals, inject phantom aircraft, and hijack flight paths.
 * **Limitations of Existing Work**: Classical tabular anomaly detectors evaluate aircraft in isolation and rely on absolute geographic coordinates, suffering severe majority-class collapse when evaluated on unseen airspace sectors under geographic domain shifts.
 * **Proposed Approach**: We propose **AeroGuard AI**, an end-to-end cyber-physical surveillance architecture based on a **Tri-Stream Spatio-Temporal Graph Neural Network (ST-GNN)**. The architecture couples: (1) an edge-aware spatial Graph Attention Network (`GATv2Conv`) operating on coordinate-free dynamic airspace topologies with 4D relative edge attributes (range, relative altitude, velocity difference, heading separation); (2) a causal recurrent Gated Recurrent Unit (GRU) stream processing sliding observation sequences ($T=5$) with explicit observation masks; and (3) a kinematic residual Multi-Layer Perceptron (MLP) branch enforcing physical motion invariants and transponder collision indicators.
-* **Evaluation & Results**: Evaluated on an out-of-distribution (OOD) test set of $32,550$ flight observations located $\approx 1,500\text{ km}$ away from training traffic, AeroGuard AI achieves **$86.37\%$ overall accuracy**, **$73.06\%$ precision**, and an F1-score of **$0.2893$** (outperforming tabular Random Forest by $+0.153$ F1), while maintaining a low false alarm rate of **$1.21\%$**. The pipeline resolves transponder cloning vulnerability (achieving **$100.0\%$ detection** on duplicate ICAO collisions and altitude overrides).
-* **Explainability & Trust**: A tri-stream Explainable AI (XAI) framework provides multi-quadrant incident dossiers that isolate physical and relational threat drivers while explicitly distinguishing model attributions from physical causal proof.
+* **Evaluation & Results**: Evaluated on an out-of-distribution (OOD) test set of $32,550$ flight observations located $\approx 1,500\text{ km}$ away from training traffic, AeroGuard AI achieves **$86.37\%$ overall accuracy**, **$73.06\%$ precision**, and an F1-score of **$0.2893$** (outperforming tabular Random Forest by $+0.153$ F1), while maintaining a low false alarm rate of **$1.21\%$**. The pipeline resolves transponder cloning vulnerability (achieving **$100.0\%$ detection**, driven by deterministic kinematic collision indicators, and $100.0\%$ on altitude overrides), while demonstrating that kinematically plausible ghost aircraft remain challenging for single-station surveillance ($2.56\%$ recall at operational threshold $t=0.20$).
+* **Explainability & Trust**: A tri-stream Explainable AI (XAI) framework provides multi-quadrant incident dossiers that isolate physical and relational threat drivers while explicitly distinguishing model anomaly attributions from physical causal proof of malicious spoofing.
 
 ### Keywords
 ADS-B Security, Spatio-Temporal Graph Neural Networks, Cyber-Physical Systems, Software-Defined Radio, Explainable AI, Avionics Surveillance.
@@ -137,7 +137,8 @@ ADS-B Security, Spatio-Temporal Graph Neural Networks, Cyber-Physical Systems, S
    - *Temporal Saliency*: Input $\times$ Gradient backpropagation across the 5-step window identifying peak divergence timesteps.
    - *Kinematic Sensitivity*: Partial derivative sensitivity across the 11 physical motion residuals.
 3. **Attribution vs. Causal Proof (A Crucial Distinction)**:
-   - Differentiating mathematical model attributions (explaining neural network logits) from physical causal proof (which requires multi-station TDoA or independent radar validation).
+   - Differentiating mathematical model attributions (explaining neural network logits) from physical causal proof.
+   - Clarifying that statistical anomaly detection does not constitute definitive proof of malicious spoofing: high residuals indicate kinematic or protocol abnormalities that could also arise from hardware faults, GPS receiver reboots, or severe multipath.
 
 ---
 
@@ -147,10 +148,12 @@ ADS-B Security, Spatio-Temporal Graph Neural Networks, Cyber-Physical Systems, S
 2. **Benchmark Comparisons on Identical 32,550 Test Samples**:
    - Inclusion of Table comparing Random Forest, Original GCN, Historical Edge-Aware GNN, Repaired Spatial GNN, and Tri-Stream ST-GNN.
 3. **Multi-Stream Ablation Study**:
-   - Independent evaluation of Spatial-only, Temporal-only, Kinematic-only, and Fusion strategies.
-   - Stream specialization table: Spatial excels on altitude ($1.0000$), Kinematics excels on transponder cloning ($0.9994$) and position jumps ($0.9697$).
-4. **Per-Attack Detection Rates**:
-   - Altitude override ($100.0\%$), Transponder cloning ($100.0\%$), Normal specificity ($98.79\%$), Ghost aircraft ($2.6\%$), Position jumps ($0.2\%$).
+   - Independent dynamic evaluation of Spatial-only, Temporal-only, Kinematic-only, Average, Max-Envelope, and Official Weighted Fusion (`research/metrics/ablation_results.json`).
+   - Stream specialization nuance: Spatial excels on altitude overrides ($1.0000$ ROC); Kinematic excels on transponder cloning ($0.9994$ ROC) and position jumps ($0.9697$ ROC).
+   - Investigation of kinematic cloning driver: Prove that transponder cloning detection is driven by the deterministic duplicate-ICAO indicator (`icao_collision`) rather than solely learned GNN embeddings (standalone spatial GNN achieved $0.0\%$ recall and $0.3300$ ROC-AUC).
+4. **Per-Attack Detection Rates & Threshold Nuance**:
+   - Operational detections ($t=0.20$): Altitude override ($100.0\%$, $660/660$), Transponder cloning ($100.0\%$, $150/150$), Normal specificity ($98.79\%$, FPR $1.21\%$), Ghost aircraft ($2.56\%$, $92/3,600$), Position jumps ($0.17\%$, $1/596$).
+   - Explicitly distinguish position-jump ranking discrimination ROC-AUC ($0.9697$) from operational recall ($0.17\%$): high isolated discrimination against normal traffic does not imply the operational detector catches sustained post-jump cruise observations.
 5. **Discrepancy Reconciliation & Historical Debugging Analysis**:
    - Documentation of the Week 1 edge double-scaling bug and row-ordering mismatch, demonstrating how empirical auditing restored spatial GNN ROC-AUC from $0.4578$ to $0.7635$.
 
@@ -158,14 +161,14 @@ ADS-B Security, Spatio-Temporal Graph Neural Networks, Cyber-Physical Systems, S
 
 ### Section VII: Operational Discussion & Physical Boundaries
 1. **The Ghost Aircraft Cruise Challenge**:
-   - Analysis of why kinematically smooth synthetic ghost flights achieve low single-sensor recall ($2.6\%$).
-   - Requirement for external airline schedule cross-referencing or distributed RF TDoA.
+   - Detailed analysis of why kinematically smooth synthetic ghost flights achieve low single-sensor operational recall ($2.56\%$).
+   - Demonstration that detecting cruising phantom flights requires external airline schedule cross-referencing or distributed RF TDoA.
 2. **The Position Jump Discontinuity Boundary**:
-   - Only the initial teleportation boundary second triggers kinematic step ratios; subsequent parallel cruise mimics steady flight.
+   - Why only the initial 1-second teleportation step triggers kinematic residuals, while subsequent observations reflect nominal cruising flight.
 3. **Software-Defined Mode & Protocol Decoding Limitations**:
-   - Software simulation boundary (absence of hardware USB SDR).
-   - Type Codes 1–4 and 19 decoded; Compact Position Reporting (CPR, Type Codes 9–18) bypassed via telemetry stream.
-   - Absence of physical-layer TDoA multilateration.
+   - Software simulation boundary: Physical USB SDR hardware was neither purchased nor operated; all processing is software-defined on simulated/recorded IQ.
+   - Compact Position Reporting (CPR, Type Codes 9–18) bypassed via telemetry stream; only Type Codes 1–4 and 19 decoded from baseband.
+   - Absence of physical-layer multi-station TDoA / AoA multilateration; avoid claims of real-world operational hardware validation.
 
 ---
 

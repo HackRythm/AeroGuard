@@ -81,23 +81,26 @@ Because large CSV datasets (>15 MB) are excluded from Git to prevent repository 
 
 | Dataset Filename | Size | Required By | Role in Workflow | Fresh Clone Status | How to Obtain / Generate |
 | :--- | :---: | :--- | :--- | :---: | :--- |
-| `data/st_gnn_test_predictions.csv` | 23.5 MB | `scripts/aeroguard_server.py` | Dashboard live telemetry replay | Excluded | Generated via Step 5B (`python scripts/audit_st_gnn_metrics.py`), or supplied locally. |
-| `data/aero_guard_test.csv` | 18.9 MB | `scripts/audit_st_gnn_metrics.py`, `research/evaluate_benchmarks.py`, `research/ablation_protocol.py` | Out-of-distribution evaluation (32,550 test samples) | Excluded | Generated via Step 5A (`python scripts/generate_aeroguard_dataset.py`), or supplied locally. |
-| `data/aero_guard_train.csv` | 57.7 MB | `scripts/train_st_gnn.py`, `scripts/train_models.py` | Retraining models from scratch | Excluded | Generated via Step 5A (`python scripts/generate_aeroguard_dataset.py`). |
-| `data/aero_guard_train_backup.csv` | 18.9 MB | `scripts/generate_aeroguard_dataset.py` | Uncorrupted base training flight telemetry | Excluded | Auto-seeded by dataset generator if absent. |
-| `data/aero_guard_test_backup.csv` | 5.8 MB | `scripts/generate_aeroguard_dataset.py` | Uncorrupted base test flight telemetry | Excluded | Auto-seeded by dataset generator if absent. |
-| `data/aero_guard_test_predictions.csv` | 22.8 MB | `research/evaluate_benchmarks.py` | Baseline model predictions cache | Excluded | Generated automatically on first run of benchmark evaluation. |
-| `data/reproduced_st_gnn_predictions.csv` | 25.0 MB | Independent verification | Output artifact of independent audit | Excluded | Output artifact created by `python scripts/audit_st_gnn_metrics.py`. |
+| Dataset Filename | Size | Required By | Role in Workflow | Fresh Clone Status | How to Obtain / Generate |
+| :--- | :---: | :--- | :--- | :---: | :--- |
+| `data/st_gnn_test_predictions.csv` | 23.5 MB | `scripts/aeroguard_server.py`, `research/evaluate_benchmarks.py` | Dashboard live telemetry replay & benchmark evaluation | Excluded | Generated via Step 5B (`python scripts/audit_st_gnn_metrics.py`), which bootstraps directly from tracked `models/st_gnn_official.pt` and `data/aero_guard_test.csv`. |
+| `data/reproduced_st_gnn_predictions.csv` | 25.0 MB | `research/evaluate_benchmarks.py`, `research/ablation_protocol.py` | Multi-stream probabilities (`reproduced_spatial_prob`, `temporal`, `kinematic`) | Excluded | Generated via Step 5B (`python scripts/audit_st_gnn_metrics.py`). |
+| `data/aero_guard_test.csv` | 18.9 MB | `scripts/audit_st_gnn_metrics.py`, `research/ablation_protocol.py` | Out-of-distribution evaluation (32,550 test samples) | Excluded | Generated via Step 5A (`python scripts/generate_aeroguard_dataset.py`). Fully deterministic (`SEED=42`). |
+| `data/aero_guard_train.csv` | 57.7 MB | `scripts/train_st_gnn.py`, `scripts/train_models.py` | Retraining models from scratch | Excluded | Generated via Step 5A (`python scripts/generate_aeroguard_dataset.py`). Fully deterministic (`SEED=42`). |
+| `data/aero_guard_train_backup.csv` | 18.9 MB | `scripts/generate_aeroguard_dataset.py` | Uncorrupted base training flight telemetry | Excluded | Auto-synthesized by dataset generator if absent. |
+| `data/aero_guard_test_backup.csv` | 5.8 MB | `scripts/generate_aeroguard_dataset.py` | Uncorrupted base test flight telemetry | Excluded | Auto-synthesized by dataset generator if absent. |
+| `data/aero_guard_test_predictions.csv` | 22.8 MB | `research/evaluate_benchmarks.py` | Baseline model predictions cache (Random Forest, GCN, Historical Edge-Aware GNN) | Excluded | Local artifact from baseline training (`scripts/train_models.py`). Required only for legacy baseline benchmark comparison; Tri-Stream ST-GNN, stream ablations, and XAI audit do not require it. |
 
 ---
 
 ## 5. Workflow Execution Commands
 
 ### Workflow 1: Fresh Clone Validation (Zero Datasets Required)
-The entire test suite uses in-memory fixtures, mock message packets, and audited JSON dossiers. No CSV datasets are required:
+The test suite validates pipeline components, encoders, mathematical metrics, and attribution logic using in-memory fixtures, mock message packets, and audited JSON dossiers. No CSV datasets are required:
 
 ```bash
-# Run all 51 automated unit and integration tests
+# Run all automated unit and integration tests (71 tests)
+# On a fresh clone, tests requiring ungenerated CSVs are skipped gracefully.
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
@@ -106,14 +109,15 @@ To generate the training and OOD test splits with physics-consistent Doppler/RSS
 
 ```bash
 # Step 5A: Generate aero_guard_train.csv (57.7 MB) and aero_guard_test.csv (18.9 MB)
+# Fully deterministic synthesis using SEED=42; requires no external downloads.
 python scripts/generate_aeroguard_dataset.py
 ```
 
 ### Workflow 3: Reproducing Model Metrics & Generating Replay Data
-Once `data/aero_guard_test.csv` is present, run model inference using the pre-trained official checkpoint:
+Once `data/aero_guard_test.csv` is present, run checkpoint inference using the pre-trained official checkpoint:
 
 ```bash
-# Step 5B: Verify exact test metrics and generate data/st_gnn_test_predictions.csv
+# Step 5B: Verify exact test metrics and generate data/st_gnn_test_predictions.csv & data/reproduced_st_gnn_predictions.csv
 python scripts/audit_st_gnn_metrics.py
 ```
 *Expected Output:*
@@ -122,16 +126,20 @@ python scripts/audit_st_gnn_metrics.py
 - Recall: `18.04%`
 - F1-Score: `0.2893`
 - ROC-AUC: `0.6235`
+- Checkpoint Inference Match: `< 1e-6` divergence
 
 ### Workflow 4: Running Multi-Model Benchmarks & Ablations
-To evaluate all baselines (Random Forest, original GCN, Edge-Aware GNN, and Tri-Stream ST-GNN):
+Once Step 5A and Step 5B are completed:
 
 ```bash
-# Benchmark all 5 models on identical 32,550 test samples
-python research/evaluate_benchmarks.py
-
-# Run stream ablation analysis (Spatial vs Temporal vs Kinematic)
+# Run stream ablation analysis across all 6 fusion strategies (Spatial vs Temporal vs Kinematic)
 python research/ablation_protocol.py
+
+# Run scientific XAI audit across representative flight scenarios (Zero CSVs required)
+python research/audit_xai_scientific.py
+
+# Benchmark models on identical 32,550 test samples
+python research/evaluate_benchmarks.py
 ```
 
 ### Workflow 5: Launching Command Center Dashboard

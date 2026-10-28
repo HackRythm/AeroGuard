@@ -83,16 +83,19 @@ The generated datasets (`data/aero_guard_train.csv` and `data/aero_guard_test.cs
 - **Domain Shift Setup**: Model trained on Jan 1, 2020 trajectories near Lisbon airspace, and tested on Jan 2, 2020 airspace located in the northern LPPC FIR sector (~1,500 km away).
 - **Relational Generalization**: While classical classifiers suffer majority class collapse due to out-of-distribution absolute coordinates and signal values, the GNN relies on relative edge features to achieve spatial invariance.
 
-### Model Performance Benchmarks (OOD Jan 2 Test Set)
+### Model Performance Benchmarks (32,550 OOD Test Observations)
 
-| Model Architecture | Input Features | Threshold ($t$) | Precision | Recall | F1-Score | ROC-AUC | PR-AUC |
-|---|---|---:|---:|---:|---:|---:|---:|
-| **Tabular Baseline (Random Forest)** | Node-level (13D with coordinates) | 0.50 / 0.18 | 1.0000 | 0.1318 | 0.2330 | 0.8717 | 0.5255 |
-| **Original GCN Baseline** | Dynamic Graph (13D Node, ignores edge attr) | 0.50 / 0.98 | 0.0000 | 0.0000 | 0.0000 | 0.5787 | 0.2712 |
-| **Repaired Edge-Aware GNN (Spatial)** | Dynamic Graph (12D Coord-free + 4D Edge) | 0.01 (Calibrated) | 0.2071 | 0.1312 | 0.1607 | 0.4658 | 0.1927 |
-| **Tri-Stream ST-GNN (Ours)** | **Spatial + Temporal GRU + Kinematic MLP** | **0.20 (Calibrated)** | **0.4590** | **0.5732** | **0.5097** | **0.9023** | **0.4431** |
+All architectures evaluated strictly on the identical **32,550 out-of-distribution test observations** (`data/aero_guard_test.csv`: 27,544 normal flights, 5,006 anomalies) under geographic domain shift (~1,500 km separation from training traffic):
 
-*Note: The Tri-Stream ST-GNN fuses 16D spatial representations from the repaired Edge-Aware GNN, 5-timestep temporal GRU sliding windows, and 11D causal kinematic motion residuals, achieving a +0.349 F1 boost over the standalone spatial encoder.*
+| Model Architecture | Input Features & Structure | Decision Threshold ($t$) | Precision | Recall | F1-Score | Accuracy | Specificity | FPR | ROC-AUC | PR-AUC |
+|---|---|:---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **Tabular Baseline (Random Forest)** | Node-level (13D with coordinates) | Default ($0.50$) | 1.0000 | 0.1318 | 0.2330 | 0.8665 | 1.0000 | 0.0000 | 0.8047 | 0.4107 |
+| **Tabular Baseline (Random Forest)** | Node-level (13D with coordinates) | Calibrated ($0.15$) | 0.6897 | 0.1318 | 0.2214 | 0.8574 | 0.9892 | 0.0108 | 0.8047 | 0.4107 |
+| **Original GCN Baseline** | Dynamic Graph (13D Node, unweighted edges) | Default ($0.50$) / Calibrated ($0.12$) | 0.0000 | 0.0000 | 0.0000 | 0.8462 | 1.0000 | 0.0000 | 0.4778 | 0.1372 |
+| **Repaired Edge-Aware GNN (Spatial Stream)** | Dynamic Graph (12D Coord-free + 4D Relational Edge) | Default ($0.50$) | 0.8772 | 0.1484 | 0.2539 | 0.8658 | 0.9962 | 0.0038 | 0.7635 | 0.4347 |
+| **Tri-Stream ST-GNN (Official Model)** | **Spatial GATv2 + Temporal GRU + Kinematic MLP** | **Calibrated ($0.20$)** | **0.7306** | **0.1804** | **0.2893** | **0.8637** | **0.9879** | **0.0121** | **0.6235** | **0.3720** |
+
+*Note: Verified against `research/metrics/benchmark_comparison.json`. Baseline predictions are aligned to ground-truth observations on composite key `(timestamp, icao24, latitude, longitude, altitude)`. Random Forest detects 100% of altitude overrides (660/660) with zero false alarms at t=0.50, but detects 0% of ghost aircraft, position jumps, or transponder cloning. The official deployed architecture is the weighted Tri-Stream ST-GNN ($0.40 \cdot p_{\text{spatial}} + 0.35 \cdot p_{\text{temporal}} + 0.25 \cdot p_{\text{kinematic}}$) operated at the calibrated threshold $t=0.20$. Standalone spatial models and historical unaligned numbers (preserved in `research/metrics/historical_unaligned_benchmarks.json`) remain distinct audit artifacts.*
 
 ---
 
@@ -148,12 +151,16 @@ AeroGuard AI incorporates an operational Explainable AI engine (`scripts/aerogua
   - `aeroguard_explainer.py` — Multi-Stream Explainable AI (XAI) engine.
   - `aeroguard_server.py` — Asynchronous Command Center backend API service (port 8000).
 - [`tests/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/tests/):
-  - `test_rtl_sdr_adapter.py` — 8 tests covering IQ ingestion, PPM modulation, matched filter, and CRC-24.
+  - `test_evaluate_benchmarks.py` — 14 tests covering baseline observation alignment, shuffled row immunity, and error handling.
+  - `test_ablation_protocol.py` — 11 tests validating dynamic multi-stream ablation and isolated stream metrics.
+  - `test_server.py` — 11 tests validating async REST API endpoints.
   - `test_live_inference.py` — 9 tests covering kinematics, track buffer, masking, and live inference.
-  - `test_end_to_end_sdr_st_gnn.py` — Full end-to-end integration test (IQ $\to$ ST-GNN $\to$ XAI).
-  - `test_server.py` — 10 tests validating async REST API endpoints.
   - `test_xai_explainer.py` — 9 unit tests for XAI attribution components.
-  - `test_st_gnn.py` — 3 unit tests for ST-GNN forward pass and masking.
+  - `test_rtl_sdr_adapter.py` — 8 tests covering IQ ingestion, PPM modulation, matched filter, and CRC-24.
+  - `test_dashboard_consistency.py` — 5 tests validating frontend state and alert schema.
+  - `test_st_gnn.py` — 4 unit tests for ST-GNN forward pass and masking.
+  - `test_runtime_e2e_validation.py` — 4 tests validating live simulation bursts and decision outcomes.
+  - `test_end_to_end_sdr_st_gnn.py` — 1 end-to-end integration test (IQ $\to$ ST-GNN $\to$ XAI).
 - [`frontend/`](file:///d:/SEM_3/SDC/project%20code/AeroGuard/frontend/):
   - Modern React/Vite/Tailwind Command Center dashboard with live radar, graph edges, and 4-tab XAI panel.
 
@@ -177,11 +184,11 @@ npm ci
 cd ..
 ```
 
-### 2. Run Complete Automated Test Suite (51 Tests)
+### 2. Run Complete Automated Test Suite (76 Tests)
 ```bash
-.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
+python -m unittest discover -s tests
 ```
-*Result*: `Ran 51 tests in ~15s, OK` (100% passing across all 8 test modules).
+*Result*: `Ran 76 tests in ~40s, OK` (100% passing across all 10 test modules).
 
 ### 3. Launch Command Center Backend API Service
 ```bash
